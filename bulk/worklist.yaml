@@ -1315,3 +1315,52 @@ entries:
   heading: "Child tax credit, income limit"
   class: credit
   note: "NJ child tax credit with income limit; self-contained."
+- citation: us/statute/26/164
+  repo: rulespec-us
+  batch: FED1
+  status: pending
+  heading: "Taxes (State and local tax deduction)"
+  class: deduction
+  note: "IRC 164 itemized deduction for state/local taxes incl. the (b)(6) SALT cap; federal continuation, not yet encoded on main. Corpus-verified (~12.6 KB, moderate xref). PolicyEngine-simulated (salt_deduction). Validation year 2026."
+- citation: us/statute/26/221
+  repo: rulespec-us
+  batch: FED1
+  status: pending
+  heading: "Interest on education loans"
+  class: deduction
+  note: "IRC 221 above-the-line student-loan-interest deduction; self-contained (~5.7 KB) with its own dollar limit and phase-out. PolicyEngine-simulated. Validation year 2026."
+- citation: us/statute/26/219/b
+  repo: rulespec-us
+  batch: FED1
+  status: pending
+  heading: "IRA deduction - maximum amount"
+  class: deduction
+  note: "IRC 219(b) maximum deductible IRA contribution; fragment split of 219 (whole section ~14 KB). Slice-verified against the encoder parent-slice resolver (~2.8 KB). PolicyEngine-simulated. Validation year 2026."
+- citation: us/statute/26/219/g
+  repo: rulespec-us
+  batch: FED1
+  status: pending
+  heading: "IRA deduction - active-participant limitation"
+  class: deduction
+  note: "IRC 219(g) phase-out of the IRA deduction for active participants in an employer plan; fragment split of 219. Slice-verified (~5.2 KB); contains the phase-out threshold table. PolicyEngine-simulated. Validation year 2026."
+- citation: us/statute/26/223/b
+  repo: rulespec-us
+  batch: FED1
+  status: pending
+  heading: "HSA deduction - limitations"
+  class: deduction
+  note: "IRC 223(b) annual HSA contribution/deduction limitations; fragment split of 223 (whole section ~26 KB). Slice-verified (~5.3 KB). PolicyEngine-simulated (hsa deduction). Validation year 2026."
+- citation: us/statute/26/1402/a
+  repo: rulespec-us
+  batch: FED1
+  status: pending
+  heading: "Net earnings from self-employment"
+  class: definition
+  note: "IRC 1402(a) net-earnings-from-self-employment base for SECA (1401, already encoded); fragment split of 1402 (whole section ~29 KB). Slice-verified (~13 KB). PolicyEngine-simulated. Validation year 2026."
+- citation: us/statute/26/1402/b
+  repo: rulespec-us
+  batch: FED1
+  status: pending
+  heading: "Self-employment income"
+  class: definition
+  note: "IRC 1402(b) self-employment income incl. the $400 floor and OASDI wage-base coordination; fragment split of 1402. Slice-verified (~1.7 KB). PolicyEngine-simulated. Validation year 2026."
