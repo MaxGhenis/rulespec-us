@@ -4,297 +4,502 @@ module:
     required: true
   source_verification:
     corpus_citation_path: us/statute/42/415/b
-    corpus_citation_paths:
-      - us/statute/42/415/b
-      - us/statute/42/415/b/1
-      - us/statute/42/415/b/2
-      - us/statute/42/415/b/3
-      - us/statute/42/415/e/2
-  summary: |-
-    An individual's average indexed monthly earnings equal the total adjusted wages and self-employment income in the selected benefit computation years divided by the number of months in those years. For old-age benefits, benefit computation years are elapsed years reduced by 5, never fewer than 2; the selected years are the computation base years with the largest adjusted earnings. Earnings in computation base years through the indexing year are adjusted by the ratio of the national average wage index for the indexing year to the national average wage index for the computation base year, while later years are available without that adjustment. Under subsection (e)(2), AIME is reduced to the next lower whole dollar.
+    source_sha256: 5b41d1cdacd39f4c49da7cf41dbbf22e1ea29b125be7105ca2daa12292e06eae
+  summary: '“An individual’s average indexed monthly earnings shall be equal to the
+
+    quotient” of adjusted wages and self-employment income for the benefit
+
+    computation years divided by “the number of months in those years.”'
+  deferred_outputs:
+  - output: us:statutes/42/415/b#child_care_dropout_adjustment
+    reason: The child-care addition depends on section 403(f)(5) earnings and annual
+      living-with-child facts; section 403(f)(5) is not supplied as an executable
+      RuleSpec dependency.
+  - output: us:statutes/42/415/b#unindexed_earnings_treated_under_subsection_f_2_C
+    reason: Paragraph (3)(B)(ii) depends on the treatment prescribed by subsection
+      (f)(2)(C), for which no copied executable output is supplied.
+  - output: us:statutes/42/415/b#average_monthly_wage_under_pre_1979_formula
+    reason: Paragraph (4) incorporates the December 1978 versions of this subsection
+      and subsection (a), including historical definitions and eligibility rules not
+      supplied as executable dependencies.
 rules:
-  - name: old_age_benefit_computation_year_dropout_years
-    kind: parameter
-    dtype: Integer
-    unit: years
-    source: 42 USC 415(b)(2)(A)(i)
-    metadata:
-      proof:
-        atoms:
-          - path: versions[0].formula
-            kind: amount
-            source:
-              corpus_citation_path: us/statute/42/415/b/2
-              excerpt: "by 5 years"
-    versions:
-      - effective_from: '1979-01-01'
-        formula: |-
-          5
-  - name: minimum_benefit_computation_years
-    kind: parameter
-    dtype: Integer
-    unit: years
-    source: 42 USC 415(b)(2)(A)
-    metadata:
-      proof:
-        atoms:
-          - path: versions[0].formula
-            kind: amount
-            source:
-              corpus_citation_path: us/statute/42/415/b/2
-              excerpt: "shall in no case be less than 2"
-    versions:
-      - effective_from: '1979-01-01'
-        formula: |-
-          2
-  - name: months_per_benefit_computation_year
-    kind: parameter
-    dtype: Integer
-    unit: months
-    source: 42 USC 415(b)(1)(B)
-    metadata:
-      proof:
-        atoms:
-          - path: versions[0].formula
-            kind: unit
-            source:
-              corpus_citation_path: us/statute/42/415/b/1
-              excerpt: "the number of months in those years"
-    versions:
-      - effective_from: '1979-01-01'
-        formula: |-
-          12
-  - name: aime_rounding_multiple
-    kind: parameter
-    dtype: Money
-    unit: USD
-    source: 42 USC 415(e)(2)
-    metadata:
-      proof:
-        atoms:
-          - path: versions[0].formula
-            kind: amount
-            source:
-              corpus_citation_path: us/statute/42/415/e/2
-              excerpt: "is not a multiple of $1"
-          - path: versions[0].formula
-            kind: formula
-            source:
-              corpus_citation_path: us/statute/42/415/e/2
-              excerpt: "it shall be reduced to the next lower multiple of $1"
-    versions:
-      - effective_from: '1979-01-01'
-        formula: |-
-          1
-  - name: elapsed_years_baseline_year
-    kind: parameter
-    dtype: Integer
-    unit: years
-    source: 42 USC 415(b)(2)(B)(iii)
-    metadata:
-      proof:
-        atoms:
-          - path: versions[0].formula
-            kind: amount
-            source:
-              corpus_citation_path: us/statute/42/415/b/2
-              excerpt: "the number of calendar years after 1950"
-    versions:
-      - effective_from: '1979-01-01'
-        formula: |-
-          1950
-  - name: elapsed_years_for_old_age_benefit_computation
-    kind: derived
-    entity: Person
-    dtype: Integer
-    period: Year
-    source: 42 USC 415(b)(2)(B)(iii)
-    metadata:
-      proof:
-        atoms:
-          - path: versions[0].formula
-            kind: formula
-            source:
-              corpus_citation_path: us/statute/42/415/b/2
-              excerpt: "the number of calendar years after 1950 (or, if later, the year in which the individual attained age 21) and before the year in which the individual died, or, if it occurred earlier (but after 1960), the year in which he attained age 62"
-          - path: versions[0].formula
-            kind: import
-            import:
-              target: us:statutes/42/415/b#elapsed_years_baseline_year
-              output: elapsed_years_baseline_year
-              hash: sha256:local
-    versions:
-      - effective_from: '1979-01-01'
-        formula: |-
-          max(0, min(year_of_death_or_later_sentinel, year_individual_attained_age_62) - max(elapsed_years_baseline_year, year_individual_attained_age_21) - 1)
-  - name: old_age_benefit_computation_year_count
-    kind: derived
-    entity: Person
-    dtype: Integer
-    period: Year
-    source: 42 USC 415(b)(2)(A)(i)
-    metadata:
-      proof:
-        atoms:
-          - path: versions[0].formula
-            kind: formula
-            source:
-              corpus_citation_path: us/statute/42/415/b/2
-              excerpt: "The number of an individual's benefit computation years equals the number of elapsed years reduced"
-          - path: versions[0].formula
-            kind: amount
-            source:
-              corpus_citation_path: us/statute/42/415/b/2
-              excerpt: "by 5 years"
-          - path: versions[0].formula
-            kind: amount
-            source:
-              corpus_citation_path: us/statute/42/415/b/2
-              excerpt: "shall in no case be less than 2"
-          - path: versions[0].formula
-            kind: import
-            import:
-              target: us:statutes/42/415/b#old_age_benefit_computation_year_dropout_years
-              output: old_age_benefit_computation_year_dropout_years
-              hash: sha256:local
-          - path: versions[0].formula
-            kind: import
-            import:
-              target: us:statutes/42/415/b#minimum_benefit_computation_years
-              output: minimum_benefit_computation_years
-              hash: sha256:local
-    versions:
-      - effective_from: '1979-01-01'
-        formula: |-
-          max(
-              minimum_benefit_computation_years,
-              elapsed_years_for_old_age_benefit_computation
-              - old_age_benefit_computation_year_dropout_years
-          )
-  - name: indexed_creditable_earnings_for_computation_base_year
-    kind: derived
-    entity: Person
-    dtype: Money
-    period: Year
-    unit: USD
-    source: 42 USC 415(b)(3)(A)-(B)
-    metadata:
-      proof:
-        atoms:
-          - path: versions[0].formula
-            kind: formula
-            source:
-              corpus_citation_path: us/statute/42/415/b/3
-              excerpt: "shall be deemed to be equal to the product of"
-          - path: versions[0].formula
-            kind: formula
-            source:
-              corpus_citation_path: us/statute/42/415/b/3
-              excerpt: "national average wage index (as defined in section 409(k)(1) of this title ) for the second calendar year preceding"
-          - path: versions[0].formula
-            kind: formula
-            source:
-              corpus_citation_path: us/statute/42/415/b/3
-              excerpt: "for the computation base year for which the determination is made"
-          - path: versions[0].formula
-            kind: condition
-            source:
-              corpus_citation_path: us/statute/42/415/b/3
-              excerpt: "but without applying subparagraph (A)"
-    versions:
-      - effective_from: '1979-01-01'
-        formula: |-
-          if computation_base_year > indexing_year_for_aime: creditable_earnings_for_computation_base_year else: creditable_earnings_for_computation_base_year * national_average_wage_index_for_indexing_year / national_average_wage_index_for_computation_base_year
-  - name: old_age_benefit_computation_year_earnings_total
-    kind: derived
-    entity: Person
-    dtype: Money
-    period: Year
-    unit: USD
-    source: 42 USC 415(b)(2)(B)(i)
-    metadata:
-      proof:
-        atoms:
-          - path: versions[0].formula
-            kind: definition
-            source:
-              corpus_citation_path: us/statute/42/415/b/2
-              excerpt: "means those computation base years, equal in number to the number determined under subparagraph (A)"
-          - path: versions[0].formula
-            kind: import
-            import:
-              target: us:statutes/42/415/b#old_age_benefit_computation_year_count
-              output: old_age_benefit_computation_year_count
-              hash: sha256:local
-          - path: versions[0].formula
-            kind: import
-            import:
-              target: us:statutes/42/415/b#indexed_creditable_earnings_for_computation_base_year
-              output: indexed_creditable_earnings_for_computation_base_year
-              hash: sha256:local
-    versions:
-      - effective_from: '1979-01-01'
-        # The reduction consumes the 415(b)(3) indexing rule above, so
-        # nominal creditable earnings flow through statutory wage
-        # indexing before top-N selection. n is the derived
-        # computation-year count: period-invariant by construction
-        # (its inputs are per-person constants), which the engine's
-        # lifetime contract requires — period-varying n and n outside
-        # 1..supplied-period-count are typed errors, never clamped.
-        formula: |-
-          sum_top_n_over_periods(indexed_creditable_earnings_for_computation_base_year, old_age_benefit_computation_year_count)
-  - name: average_indexed_monthly_earnings
-    kind: derived
-    entity: Person
-    dtype: Money
-    period: Year
-    unit: USD
-    source: 42 USC 415(b)(1), 415(e)(2)
-    metadata:
-      proof:
-        atoms:
-          - path: versions[0].formula
-            kind: formula
-            source:
-              corpus_citation_path: us/statute/42/415/b/1
-              excerpt: "shall be equal to the quotient obtained by dividing"
-          - path: versions[0].formula
-            kind: formula
-            source:
-              corpus_citation_path: us/statute/42/415/b/1
-              excerpt: "the total (after adjustment under paragraph (3))"
-          - path: versions[0].formula
-            kind: formula
-            source:
-              corpus_citation_path: us/statute/42/415/b/1
-              excerpt: "the number of months in those years"
-          - path: versions[0].formula
-            kind: formula
-            source:
-              corpus_citation_path: us/statute/42/415/e/2
-              excerpt: "it shall be reduced to the next lower multiple of $1"
-          - path: versions[0].formula
-            kind: import
-            import:
-              target: us:statutes/42/415/b#months_per_benefit_computation_year
-              output: months_per_benefit_computation_year
-              hash: sha256:local
-          - path: versions[0].formula
-            kind: import
-            import:
-              target: us:statutes/42/415/b#aime_rounding_multiple
-              output: aime_rounding_multiple
-              hash: sha256:local
-    versions:
-      - effective_from: '1979-01-01'
-        formula: |-
-          floor(
-              (
-                  old_age_benefit_computation_year_earnings_total
-                  / (
-                      months_per_benefit_computation_year
-                      * old_age_benefit_computation_year_count
-                  )
-              )
-              / aime_rounding_multiple
-          ) * aime_rounding_multiple
+- name: months_per_benefit_computation_year
+  kind: parameter
+  dtype: Integer
+  unit: months
+  visibility: public
+  source: 42 U.S.C. 415(b)(1)(B)
+  metadata:
+    proof:
+      atoms:
+      - path: versions[0].formula
+        kind: unit
+        source:
+          corpus_citation_path: us/statute/42/415/b
+          excerpt: the number of months in those years
+  versions:
+  - effective_from: '1979-01-01'
+    formula: calendar_years_to_months(1)
+- name: average_indexed_monthly_earnings
+  kind: derived
+  entity: Person
+  dtype: Money
+  period: Year
+  unit: USD
+  visibility: public
+  source: 42 U.S.C. 415(b)(1)
+  metadata:
+    proof:
+      atoms:
+      - path: versions[0].formula
+        kind: formula
+        source:
+          corpus_citation_path: us/statute/42/415/b
+          excerpt: the quotient obtained by dividing
+      - path: versions[0].formula
+        kind: unit
+        source:
+          corpus_citation_path: us/statute/42/415/b
+          excerpt: the number of months in those years
+      - path: versions[0].formula
+        kind: formula
+        source:
+          corpus_citation_path: us/guidance/ssa/cola/2026/federal-register/block-1
+          excerpt: round the resulting average amount down to the next lower dollar
+            amount
+      - path: versions[0].formula
+        kind: import
+        import:
+          target: us:statutes/42/415/b#old_age_benefit_computation_year_earnings_total
+          output: old_age_benefit_computation_year_earnings_total
+          hash: sha256:local
+      - path: versions[0].formula
+        kind: import
+        import:
+          target: us:statutes/42/415/b#old_age_benefit_computation_year_count
+          output: old_age_benefit_computation_year_count
+          hash: sha256:local
+  versions:
+  - effective_from: '1979-01-01'
+    formula: "floor(\n  old_age_benefit_computation_year_earnings_total\n  / calendar_years_to_months(old_age_benefit_computation_year_count)\n\
+      ) * aime_rounding_multiple"
+- name: old_age_benefit_computation_year_dropout_years
+  kind: parameter
+  dtype: Integer
+  unit: years
+  visibility: public
+  source: 42 U.S.C. 415(b)(2)(A)(i)
+  metadata:
+    proof:
+      atoms:
+      - path: versions[0].formula
+        kind: parameter
+        source:
+          corpus_citation_path: us/statute/42/415/b
+          excerpt: by 5 years
+  versions:
+  - effective_from: '1979-01-01'
+    formula: '5'
+- name: minimum_benefit_computation_years
+  kind: parameter
+  dtype: Integer
+  unit: years
+  visibility: public
+  source: 42 U.S.C. 415(b)(2)(A)
+  metadata:
+    proof:
+      atoms:
+      - path: versions[0].formula
+        kind: parameter
+        source:
+          corpus_citation_path: us/statute/42/415/b
+          excerpt: shall in no case be less than 2
+  versions:
+  - effective_from: '1979-01-01'
+    formula: '2'
+- name: aime_rounding_multiple
+  kind: parameter
+  dtype: Money
+  unit: USD
+  visibility: public
+  source: 90 FR 49047, AIME computation
+  metadata:
+    proof:
+      atoms:
+      - path: versions[0].formula
+        kind: parameter
+        source:
+          corpus_citation_path: us/guidance/ssa/cola/2026/federal-register/block-1
+          excerpt: round the resulting average amount down to the next lower dollar
+            amount
+  versions:
+  - effective_from: '1979-01-01'
+    formula: '1'
+- name: elapsed_years_baseline_year
+  kind: parameter
+  dtype: Integer
+  unit: years
+  visibility: public
+  source: 42 U.S.C. 415(b)(2)(B)(iii)
+  metadata:
+    proof:
+      atoms:
+      - path: versions[0].formula
+        kind: parameter
+        source:
+          corpus_citation_path: us/statute/42/415/b
+          excerpt: calendar years after 1950
+  versions:
+  - effective_from: '1979-01-01'
+    formula: '1950'
+- name: disability_dropout_fraction_denominator
+  kind: parameter
+  dtype: Integer
+  unit: years
+  visibility: private
+  source: 42 U.S.C. 415(b)(2)(A)(ii)
+  metadata:
+    proof:
+      atoms:
+      - path: versions[0].formula
+        kind: parameter
+        source:
+          corpus_citation_path: us/statute/42/415/b
+          excerpt: one-fifth of such individual’s elapsed years
+  versions:
+  - effective_from: '1979-01-01'
+    formula: '5'
+- name: maximum_disability_dropout_years
+  kind: parameter
+  dtype: Integer
+  unit: years
+  visibility: private
+  source: 42 U.S.C. 415(b)(2)(A)(ii)
+  metadata:
+    proof:
+      atoms:
+      - path: versions[0].formula
+        kind: parameter
+        source:
+          corpus_citation_path: us/statute/42/415/b
+          excerpt: but not by more than 5 years
+  versions:
+  - effective_from: '1979-01-01'
+    formula: '5'
+- name: maximum_child_care_dropout_years
+  kind: parameter
+  dtype: Integer
+  unit: years
+  visibility: private
+  source: 42 U.S.C. 415(b)(2)(A)
+  metadata:
+    proof:
+      atoms:
+      - path: versions[0].formula
+        kind: parameter
+        source:
+          corpus_citation_path: us/statute/42/415/b
+          excerpt: a combined total not exceeding 3
+  versions:
+  - effective_from: '1979-01-01'
+    formula: '3'
+- name: elapsed_years_early_upper_boundary_year
+  kind: parameter
+  dtype: Integer
+  unit: years
+  visibility: private
+  source: 42 U.S.C. 415(b)(2)(B)(iii)
+  metadata:
+    proof:
+      atoms:
+      - path: versions[0].formula
+        kind: parameter
+        source:
+          corpus_citation_path: us/statute/42/415/b
+          excerpt: but after 1960
+  versions:
+  - effective_from: '1979-01-01'
+    formula: '1960'
+- name: elapsed_years_for_old_age_benefit_computation
+  kind: derived
+  entity: Person
+  dtype: Integer
+  period: Year
+  visibility: public
+  source: 42 U.S.C. 415(b)(2)(B)(iii)
+  metadata:
+    proof:
+      atoms:
+      - path: versions[0].formula
+        kind: formula
+        source:
+          corpus_citation_path: us/statute/42/415/b
+          excerpt: calendar years after 1950 (or, if later, the year in which the
+            individual attained age 21) and before
+      - path: versions[0].formula
+        kind: exception
+        source:
+          corpus_citation_path: us/statute/42/415/b
+          excerpt: excludes any calendar year any part of which is included in a period
+            of disability
+  versions:
+  - effective_from: '1979-01-01'
+    formula: "max(\n  0,\n  (if year_individual_attained_age_62 > elapsed_years_early_upper_boundary_year:\n\
+      \    min(year_of_death_or_later_sentinel, year_individual_attained_age_62)\n\
+      \  else:\n    year_of_death_or_later_sentinel)\n  - max(elapsed_years_baseline_year,\
+      \ year_individual_attained_age_21)\n  - 1\n  - calendar_years_with_any_part_in_period_of_disability_within_elapsed_year_interval\n\
+      )"
+- name: old_age_benefit_computation_year_count
+  kind: derived
+  entity: Person
+  dtype: Integer
+  period: Year
+  visibility: public
+  source: 42 U.S.C. 415(b)(2)(A)
+  metadata:
+    proof:
+      atoms:
+      - path: versions[0].formula
+        kind: formula
+        source:
+          corpus_citation_path: us/statute/42/415/b
+          excerpt: number of elapsed years reduced
+      - path: versions[0].formula
+        kind: exception
+        source:
+          corpus_citation_path: us/statute/42/415/b
+          excerpt: one-fifth of such individual’s elapsed years (disregarding any
+            resulting fractional part of a year), but not by more than 5 years
+      - path: versions[0].formula
+        kind: condition
+        source:
+          corpus_citation_path: us/statute/42/415/b
+          excerpt: shall in no case be less than 2
+  versions:
+  - effective_from: '1979-01-01'
+    formula: "max(\n  minimum_benefit_computation_years,\n  elapsed_years_for_old_age_benefit_computation\n\
+      \  - (if disability_dropout_rule_applies_to_current_eligibility:\n      min(\n\
+      \        floor(elapsed_years_for_old_age_benefit_computation / disability_dropout_fraction_denominator),\n\
+      \        maximum_disability_dropout_years\n      )\n    else:\n      old_age_benefit_computation_year_dropout_years)\n\
+      \  - (if disability_dropout_rule_applies_to_current_eligibility\n        and\
+      \ child_care_dropout_would_not_lower_primary_insurance_amount:\n      min(\n\
+      \        qualifying_child_care_dropout_year_count,\n        maximum_child_care_dropout_years\n\
+      \      )\n    else:\n      0)\n)"
+- name: computation_base_year_is_eligible
+  kind: derived
+  entity: Person
+  dtype: Judgment
+  period: Year
+  visibility: private
+  source: 42 U.S.C. 415(b)(2)(B)(ii)
+  metadata:
+    proof:
+      atoms:
+      - path: versions[0].formula
+        kind: condition
+        source:
+          corpus_citation_path: us/statute/42/415/b
+          excerpt: calendar years after 1950 and before
+      - path: versions[0].formula
+        kind: exception
+        source:
+          corpus_citation_path: us/statute/42/415/b
+          excerpt: excludes any calendar year entirely included in a period of disability
+  versions:
+  - effective_from: '1979-01-01'
+    formula: 'computation_base_year > elapsed_years_baseline_year
+
+      and computation_base_year < computation_base_year_upper_boundary_year
+
+      and not computation_base_year_is_entirely_in_period_of_disability'
+- name: indexed_creditable_earnings_for_computation_base_year
+  kind: derived
+  entity: Person
+  dtype: Money
+  period: Year
+  unit: USD
+  visibility: public
+  source: 42 U.S.C. 415(b)(3)
+  metadata:
+    proof:
+      atoms:
+      - path: versions[0].formula
+        kind: formula
+        source:
+          corpus_citation_path: us/statute/42/415/b
+          excerpt: the product of
+      - path: versions[0].formula
+        kind: exception
+        source:
+          corpus_citation_path: us/statute/42/415/b
+          excerpt: shall be available for use in determining an individual’s benefit
+            computation years, but without applying subparagraph (A)
+  versions:
+  - effective_from: '1979-01-01'
+    formula: "if not computation_base_year_is_eligible:\n  0\nelse:\n  if computation_base_year\
+      \ > indexing_year_for_aime\n    or computation_base_year_is_treated_as_last_year_under_subsection_f_2_C:\n\
+      \    creditable_earnings_for_computation_base_year\n  else:\n    creditable_earnings_for_computation_base_year\n\
+      \    * national_average_wage_index_for_indexing_year\n    / national_average_wage_index_for_computation_base_year"
+- name: old_age_benefit_computation_year_earnings_total
+  kind: derived
+  entity: Person
+  dtype: Money
+  period: Year
+  unit: USD
+  visibility: public
+  source: 42 U.S.C. 415(b)(2)(B)(i)
+  metadata:
+    proof:
+      atoms:
+      - path: versions[0].formula
+        kind: ordering
+        source:
+          corpus_citation_path: us/statute/42/415/b
+          excerpt: for which the total of such individual’s wages and self-employment
+            income, after adjustment under paragraph (3), is the largest
+      - path: versions[0].formula
+        kind: import
+        import:
+          target: us:statutes/42/415/b#old_age_benefit_computation_year_count
+          output: old_age_benefit_computation_year_count
+          hash: sha256:local
+      - path: versions[0].formula
+        kind: import
+        import:
+          target: us:statutes/42/415/b#indexed_creditable_earnings_for_computation_base_year
+          output: indexed_creditable_earnings_for_computation_base_year
+          hash: sha256:local
+  versions:
+  - effective_from: '1979-01-01'
+    formula: "sum_top_n_over_periods(\n  indexed_creditable_earnings_for_computation_base_year,\n\
+      \  old_age_benefit_computation_year_count\n)"
+- name: disability_interruption_months
+  kind: parameter
+  dtype: Integer
+  unit: months
+  visibility: private
+  source: 42 U.S.C. 415(b)(2)(A)
+  metadata:
+    proof:
+      atoms:
+      - path: versions[0].formula
+        kind: parameter
+        source:
+          corpus_citation_path: us/statute/42/415/b
+          excerpt: at least 12 consecutive months
+  versions:
+  - effective_from: '1979-01-01'
+    formula: '12'
+- name: child_care_age_limit_years
+  kind: parameter
+  dtype: Integer
+  unit: years
+  visibility: private
+  source: 42 U.S.C. 415(b)(2)(A)
+  metadata:
+    proof:
+      atoms:
+      - path: versions[0].formula
+        kind: parameter
+        source:
+          corpus_citation_path: us/statute/42/415/b
+          excerpt: under the age of 3
+  versions:
+  - effective_from: '1979-01-01'
+    formula: '3'
+- name: elapsed_years_age_21_threshold
+  kind: parameter
+  dtype: Integer
+  unit: years
+  visibility: private
+  source: 42 U.S.C. 415(b)(2)(B)(iii)
+  metadata:
+    proof:
+      atoms:
+      - path: versions[0].formula
+        kind: parameter
+        source:
+          corpus_citation_path: us/statute/42/415/b
+          excerpt: the year in which the individual attained age 21
+  versions:
+  - effective_from: '1979-01-01'
+    formula: '21'
+- name: elapsed_years_age_62_threshold
+  kind: parameter
+  dtype: Integer
+  unit: years
+  visibility: private
+  source: 42 U.S.C. 415(b)(2)(B)(iii)
+  metadata:
+    proof:
+      atoms:
+      - path: versions[0].formula
+        kind: parameter
+        source:
+          corpus_citation_path: us/statute/42/415/b
+          excerpt: the year in which he attained age 62
+  versions:
+  - effective_from: '1979-01-01'
+    formula: '62'
+inputs:
+- name: computation_base_year
+  entity: Person
+  dtype: Integer
+  period: Year
+- name: creditable_earnings_for_computation_base_year
+  entity: Person
+  dtype: Money
+  period: Year
+  unit: USD
+- name: indexing_year_for_aime
+  entity: Person
+  dtype: Integer
+  period: Year
+- name: national_average_wage_index_for_computation_base_year
+  entity: Person
+  dtype: Decimal
+  period: Year
+- name: national_average_wage_index_for_indexing_year
+  entity: Person
+  dtype: Decimal
+  period: Year
+- name: year_individual_attained_age_21
+  entity: Person
+  dtype: Integer
+  period: Year
+- name: year_individual_attained_age_62
+  entity: Person
+  dtype: Integer
+  period: Year
+- name: year_of_death_or_later_sentinel
+  entity: Person
+  dtype: Integer
+  period: Year
+- name: calendar_years_with_any_part_in_period_of_disability_within_elapsed_year_interval
+  entity: Person
+  dtype: Integer
+  period: Year
+- name: disability_dropout_rule_applies_to_current_eligibility
+  entity: Person
+  dtype: Boolean
+  period: Year
+- name: qualifying_child_care_dropout_year_count
+  entity: Person
+  dtype: Integer
+  period: Year
+- name: child_care_dropout_would_not_lower_primary_insurance_amount
+  entity: Person
+  dtype: Boolean
+  period: Year
+- name: computation_base_year_upper_boundary_year
+  entity: Person
+  dtype: Integer
+  period: Year
+- name: computation_base_year_is_entirely_in_period_of_disability
+  entity: Person
+  dtype: Boolean
+  period: Year
+- name: computation_base_year_is_treated_as_last_year_under_subsection_f_2_C
+  entity: Person
+  dtype: Boolean
+  period: Year
