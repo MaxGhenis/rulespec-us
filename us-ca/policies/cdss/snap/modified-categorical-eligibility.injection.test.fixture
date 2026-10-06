@@ -17,7 +17,10 @@
 - name: caller_injected_eligible_canonical_member_fails_closed
   period: 2026-01
   input: &injected_canonical_membership_input
+    us:policies/usda/snap/fy-2026-cola/maximum-allotments#input.household_size: 1
+    us:policies/usda/snap/fy-2026-cola/deductions#input.household_size: 1
     us:policies/usda/snap/fy-2026-cola/income-eligibility-standards#input.household_size: 1
+    us:regulations/7-cfr/273/10#input.household_size: 1
     us:regulations/7-cfr/273/10#input.snap_gross_monthly_earned_income: 2596.95
     us:regulations/7-cfr/273/10#input.snap_total_monthly_unearned_income: 0
     us:regulations/7-cfr/273/10#input.snap_income_exclusions: 0
@@ -68,6 +71,9 @@
     us-ca:policies/cdss/snap/modified-categorical-eligibility#calfresh_mce_canonical_membership_integrity_verified: not_holds
     us-ca:policies/cdss/snap/modified-categorical-eligibility#calfresh_mce_household_exclusion_applies: holds
     us-ca:policies/cdss/snap/modified-categorical-eligibility#calfresh_mce_status_conferred: not_holds
+    us-ca:policies/cdss/snap/fy-2026-benefit-calculation#calfresh_mce_resource_eligibility_test_waived: not_holds
+    us-ca:policies/cdss/snap/fy-2026-benefit-calculation#calfresh_mce_net_income_eligibility_test_waived: not_holds
+    us-ca:policies/cdss/snap/fy-2026-benefit-calculation#calfresh_categorical_zero_benefit_denial_applies: not_holds
 
 - name: caller_cannot_spoof_derived_membership_integrity_outputs
   period: 2026-01
@@ -80,3 +86,6 @@
     us-ca:policies/cdss/snap/modified-categorical-eligibility#calfresh_mce_canonical_membership_integrity_verified: not_holds
     us-ca:policies/cdss/snap/modified-categorical-eligibility#calfresh_mce_household_exclusion_applies: holds
     us-ca:policies/cdss/snap/modified-categorical-eligibility#calfresh_mce_status_conferred: not_holds
+    us-ca:policies/cdss/snap/fy-2026-benefit-calculation#calfresh_mce_resource_eligibility_test_waived: not_holds
+    us-ca:policies/cdss/snap/fy-2026-benefit-calculation#calfresh_mce_net_income_eligibility_test_waived: not_holds
+    us-ca:policies/cdss/snap/fy-2026-benefit-calculation#calfresh_categorical_zero_benefit_denial_applies: not_holds
