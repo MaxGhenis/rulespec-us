@@ -39,7 +39,7 @@ import yaml
 
 # Jurisdiction roots are top-level directories named like ``us`` or ``us-ca``
 # that hold RuleSpec YAML. Non-jurisdiction roots (``.axiom``, ``.github``,
-# ``programs``, ``tests``) never carry ground-truth citation paths, so the
+# ``tests``) never carry ground-truth citation paths, so the
 # scan restricts to the jurisdiction-directory convention the org validate
 # workflow uses (``validate-roots: auto``): a two-letter code optionally
 # followed by hyphenated segments.
@@ -48,6 +48,7 @@ INDEX_RELATIVE_PATH = Path(".axiom") / "index" / "provisions_to_rules.json"
 
 MODULE_REFERENCE = "module"
 PROOF_ATOM_REFERENCE = "proof_atom"
+RULESPEC_MODULE_ROOTS = ("legislation", "policies", "regulations", "statutes")
 
 
 def is_jurisdiction_dir(name: str) -> bool:
@@ -58,7 +59,9 @@ def is_jurisdiction_dir(name: str) -> bool:
     if len(segments[0]) != 2 or not segments[0].isalpha() or not segments[0].islower():
         return False
     for segment in segments[1:]:
-        if not segment or not all(ch.isalnum() and (ch.islower() or ch.isdigit()) for ch in segment):
+        if not segment or not all(
+            ch.isalnum() and (ch.islower() or ch.isdigit()) for ch in segment
+        ):
             return False
     return True
 
@@ -74,13 +77,15 @@ def jurisdiction_dirs(repo_root: Path) -> list[str]:
 def iter_module_files(repo_root: Path) -> Iterable[Path]:
     """Yield every non-test RuleSpec YAML file under jurisdiction roots."""
     for root in jurisdiction_dirs(repo_root):
-        base = repo_root / root
-        for pattern in ("*.yaml", "*.yml"):
-            for path in base.rglob(pattern):
+        for content_root in RULESPEC_MODULE_ROOTS:
+            base = repo_root / root / content_root
+            if not base.is_dir():
+                continue
+            for path in base.rglob("*.yaml"):
                 if not path.is_file():
                     continue
                 name = path.name
-                if name.endswith((".test.yaml", ".test.yml")):
+                if name.endswith(".test.yaml"):
                     continue
                 yield path
 
@@ -150,7 +155,9 @@ def build_index(repo_root: Path) -> dict[str, Any]:
         module_count += 1
         module_path = path.relative_to(repo_root).as_posix()
         for citation, kinds in references.items():
-            provisions.setdefault(citation, {}).setdefault(module_path, set()).update(kinds)
+            provisions.setdefault(citation, {}).setdefault(module_path, set()).update(
+                kinds
+            )
 
     edge_count = 0
     provisions_out: dict[str, Any] = {}
@@ -200,7 +207,9 @@ def render_index(index: dict[str, Any]) -> str:
     regenerate/rebase.
     """
     serializable = {key: value for key, value in index.items() if key != "counts"}
-    return json.dumps(serializable, indent=2, ensure_ascii=False, sort_keys=False) + "\n"
+    return (
+        json.dumps(serializable, indent=2, ensure_ascii=False, sort_keys=False) + "\n"
+    )
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -225,7 +234,9 @@ def main(argv: list[str] | None = None) -> int:
     counts = index["counts"]
 
     if args.check:
-        existing = output_path.read_text(encoding="utf-8") if output_path.exists() else ""
+        existing = (
+            output_path.read_text(encoding="utf-8") if output_path.exists() else ""
+        )
         if existing != rendered:
             print(
                 f"{INDEX_RELATIVE_PATH.as_posix()} is stale. "

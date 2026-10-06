@@ -11,7 +11,8 @@ ROOT = Path(__file__).resolve().parents[1]
 # (us/, us-al/, …), each holding its own content dirs. Durable ids are
 # <jurisdiction dir>:<path inside it>#<rule>.
 JURISDICTION_DIR_RE = re.compile(r"^[a-z]{2}(-[a-z0-9-]+)*$")
-CONTENT_DIRS = ("statutes", "regulations", "policies", "legislation")
+RULESPEC_MODULE_DIRS = ("legislation", "policies", "regulations", "statutes")
+CANONICAL_CONTENT_DIRS = (*RULESPEC_MODULE_DIRS, "programs")
 IGNORED_DIRS = {".git", ".pytest_cache", ".venv", "__pycache__", "_axiom"}
 DISALLOWED_GENERIC_RULE_NAMES = {
     "amount",
@@ -30,7 +31,7 @@ def jurisdiction_dirs() -> list[Path]:
         for child in ROOT.iterdir()
         if child.is_dir()
         and JURISDICTION_DIR_RE.match(child.name)
-        and any((child / marker).is_dir() for marker in CONTENT_DIRS)
+        and any((child / marker).is_dir() for marker in CANONICAL_CONTENT_DIRS)
     )
 
 
@@ -38,7 +39,7 @@ def rulespec_content_roots() -> list[Path]:
     return [
         jurisdiction / marker
         for jurisdiction in jurisdiction_dirs()
-        for marker in CONTENT_DIRS
+        for marker in RULESPEC_MODULE_DIRS
         if (jurisdiction / marker).is_dir()
     ]
 
@@ -48,17 +49,8 @@ def allowed_yaml_roots() -> set[str]:
         ".axiom",
         ".github",
         "bulk",
-        "programs",
-        "known-dangling.yaml",
         "known-missing-money-atoms.yaml",
         "known-validation-gaps.yaml",
-        # Declared oracle-coverage debt lane, written at the repo root by
-        # `axiom-encode oracle-coverage-pending sync`. The changed-file oracle
-        # coverage gate reclassifies these outputs from unmapped to
-        # pending_classification; the bulk-encode dispatcher (and bulk/
-        # local_drain.py) sync it for every new-state module so the required
-        # validate check passes instead of hanging on `... : unmapped`.
-        "oracle-coverage-pending.yaml",
         *(d.name for d in jurisdiction_dirs()),
     }
 
@@ -101,7 +93,9 @@ def iter_rulespec_files() -> list[Path]:
     files: list[Path] = []
     for root in rulespec_content_roots():
         files.extend(
-            path for path in root.rglob("*.yaml") if not path.name.endswith(".test.yaml")
+            path
+            for path in root.rglob("*.yaml")
+            if not path.name.endswith(".test.yaml")
         )
     return sorted(files)
 
@@ -114,7 +108,7 @@ def canonical_rule_id(path: Path, rule_name: str) -> str:
 
 
 def test_no_obsolete_formula_artifacts() -> None:
-    obsolete_ext = ".r" "ac"
+    obsolete_ext = ".rac"
     obsolete = [
         path.relative_to(ROOT).as_posix()
         for path in iter_repo_files()
@@ -146,8 +140,14 @@ def test_no_disallowed_roots_or_yaml_fixtures() -> None:
         if path.suffix in {".yaml", ".yml"}
         and path.relative_to(ROOT).parts[0] not in allowed
     ]
+    repository_root_content = [
+        marker
+        for marker in CANONICAL_CONTENT_DIRS
+        if (ROOT / marker).exists() or (ROOT / marker).is_symlink()
+    ]
 
     assert disallowed_roots == []
+    assert repository_root_content == []
     assert yaml_fixtures == []
     assert stray_yaml == []
 
@@ -194,13 +194,19 @@ def test_rulespec_files_use_rulespec_v1_shape() -> None:
             continue
         for index, rule in enumerate(rules):
             if not isinstance(rule, dict):
-                invalid.append(f"{path.relative_to(ROOT)}: rules[{index}] is not a mapping")
+                invalid.append(
+                    f"{path.relative_to(ROOT)}: rules[{index}] is not a mapping"
+                )
                 continue
             for key in ("name", "kind"):
                 if key not in rule:
-                    invalid.append(f"{path.relative_to(ROOT)}: rules[{index}] missing {key}")
+                    invalid.append(
+                        f"{path.relative_to(ROOT)}: rules[{index}] missing {key}"
+                    )
             if rule.get("kind") in {"parameter", "derived"} and "versions" not in rule:
-                invalid.append(f"{path.relative_to(ROOT)}: rules[{index}] missing versions")
+                invalid.append(
+                    f"{path.relative_to(ROOT)}: rules[{index}] missing versions"
+                )
 
     invalid_paths = sorted({item.split(":", 1)[0] for item in invalid})
     assert apply_gap_ratchet("shape_issues", invalid_paths) == []
@@ -242,9 +248,8 @@ def test_rulespec_files_use_corpus_source_locators() -> None:
                 if module.get("source_url"):
                     legacy.append(f"{path.relative_to(ROOT)}: module.source_url")
                 source_verification = module.get("source_verification")
-                if (
-                    isinstance(source_verification, dict)
-                    and source_verification.get("source_url")
+                if isinstance(source_verification, dict) and source_verification.get(
+                    "source_url"
                 ):
                     legacy.append(
                         f"{path.relative_to(ROOT)}: "

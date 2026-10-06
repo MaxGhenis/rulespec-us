@@ -4,7 +4,6 @@ allowed_root_directories:
   - .claude
   - .github
   - bulk
-  - programs
   - tests
   # Repo build tooling (program-artifacts pipeline).
   - tools
@@ -68,10 +67,8 @@ allowed_root_files:
   - LICENSE-CODE
   - NOTICE
   - README.md
-  - known-dangling.yaml
   - known-missing-money-atoms.yaml
   - known-validation-gaps.yaml
-  - oracle-coverage-pending.yaml
 path_rules:
   - patterns:
       - ".axiom/**"
@@ -94,10 +91,6 @@ path_rules:
     allow_extensions:
       - ".md"
       - ".py"
-      - ".yaml"
-  - patterns:
-      - "programs/**"
-    allow_extensions:
       - ".yaml"
   - patterns:
       - "tests/**"

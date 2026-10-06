@@ -60,7 +60,11 @@ def test_citation_paths_ignores_blank_and_non_string():
     payload = {
         "module": {"source_verification": {"corpus_citation_path": "  "}},
         "rules": [
-            {"metadata": {"proof": {"atoms": [{"source": {"corpus_citation_path": 123}}]}}}
+            {
+                "metadata": {
+                    "proof": {"atoms": [{"source": {"corpus_citation_path": 123}}]}
+                }
+            }
         ],
     }
     assert gen.citation_paths_for_module(payload) == {}
@@ -89,9 +93,9 @@ def test_build_index_is_deterministic_and_counts_edges(tmp_path):
     )
     # A companion test file must be ignored.
     _write(root / "us" / "statutes" / "26" / "a.test.yaml", "cases: []\n")
-    # A non-jurisdiction directory must be ignored.
+    # Canonical composition specs are not atomic RuleSpec modules.
     _write(
-        root / "programs" / "x.yaml",
+        root / "us" / "programs" / "x" / "fy-2026.yaml",
         "module:\n  source_verification:\n    corpus_citation_path: us/statute/99/z\n",
     )
 
@@ -102,7 +106,7 @@ def test_build_index_is_deterministic_and_counts_edges(tmp_path):
         "us-ca/statutes/26/b.yaml",
         "us/statutes/26/a.yaml",
     ]
-    # us/statute/99/z under programs/ must not appear.
+    # us/statute/99/z under the composition-only programs root must not appear.
     assert "us/statute/99/z" not in index["provisions"]
     # Rendering is stable across runs.
     assert gen.render_index(index) == gen.render_index(gen.build_index(root))

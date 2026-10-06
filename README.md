@@ -6,14 +6,16 @@ into runnable programs.
 
 ## Layout
 
-- `us/`: federal encodings (`statutes/`, `regulations/`, `policies/`), with
-  tests beside each encoding as `.test.yaml`.
+- `us/`: federal content under exactly `legislation/`, `policies/`, `programs/`,
+  `regulations/`, and `statutes/`. Atomic RuleSpec modules keep companion tests
+  beside each encoding as `.test.yaml`; `programs/` contains declarative
+  composition specs.
 - `us-al/` … `us-tx/`: one directory per state, same internal convention.
   Absorbed from the former standalone `rulespec-us-<state>` repos with full
   history; those repos are archived pointers.
-- `programs/`: declarative compose specs, one YAML per
-  (jurisdiction, program, period), consumed by `axiom-compose`. Absorbed
-  from `axiom-programs` (US specs) with full history.
+- `<jurisdiction>/programs/`: one declarative compose spec per program and
+  period, consumed by `axiom-compose`. The repository root has no compatibility
+  `programs/` mirror.
 - `tests/`: repository-wide validation — layout, companion-test pairing,
   RuleSpec shape, derived-rule coverage, and program-spec scope auditing —
   plus `generate_reverse_index.py`, which builds the provision→rules index.
@@ -31,8 +33,9 @@ pre-consolidation layout; only file locations changed.
 
 ## Known gaps (ratcheted)
 
-- `known-dangling.yaml`: program-spec scope entries that don't resolve to a
-  module yet (axiom-programs#14).
+ProgramSpec scope entries have no allowlist: every declared atomic module must
+resolve during composition.
+
 - `known-validation-gaps.yaml`: pre-existing content debt surfaced when
   repository-wide discipline first ran across all jurisdictions
   (rulespec-us#394).

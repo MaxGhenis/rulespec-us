@@ -47,8 +47,6 @@ def manifest_roots() -> list[tuple[Path, Path]]:
 
 def resolve_applied_path(base: Path, applied: str) -> Path:
     head = applied.split("/", 1)[0]
-    if base == ROOT and head == "programs":
-        return ROOT / applied
     if base == ROOT and not JURISDICTION_DIR_RE.match(head):
         # Pre-consolidation federal manifests predate the us/ prefix.
         return ROOT / "us" / applied
@@ -123,9 +121,18 @@ def test_manifests_reference_existing_modules() -> None:
     assert problems == [], (
         "Encoding manifests reference modules that no longer exist at the "
         "recorded path. Move or regenerate the manifest alongside the "
-        "module, or delete it if the module was retired:\n"
-        + "\n".join(problems)
+        "module, or delete it if the module was retired:\n" + "\n".join(problems)
     )
+
+
+def test_composition_specs_have_no_rulespec_apply_manifests() -> None:
+    composition_entries = [
+        module.relative_to(ROOT).as_posix()
+        for module in sorted(latest_manifest_entries())
+        if len(module.relative_to(ROOT).parts) >= 2
+        and module.relative_to(ROOT).parts[1] == "programs"
+    ]
+    assert composition_entries == []
 
 
 def test_unmanifested_modules_are_reported_not_failed() -> None:

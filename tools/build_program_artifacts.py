@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
-"""Build compiled program artifacts from every spec in programs/.
+"""Build compiled program artifacts from canonical jurisdiction program roots.
 
-For each programs/<jurisdiction>/<program>/<period>.yaml spec this composes the
+For each <jurisdiction>/programs/<program>/<period>.yaml spec this composes the
 program (axiom-compose), compiles it to an executable artifact
 (axiom-rules-engine compile), stamps provenance into the artifact metadata, and
 writes a manifest describing everything that was built.
@@ -9,12 +9,6 @@ writes a manifest describing everything that was built.
 The output is deterministic for a given (corpus SHA, composer version, engine
 version): no timestamps or randomness enter the artifacts or the manifest, so
 rebuilding the same commit yields byte-identical outputs.
-
-Modes:
-  --check      compile everything, write nothing; exit 1 if any spec outside
-               tools/known-broken-specs.txt fails (and if an allowlisted spec
-               unexpectedly succeeds, say so, so the allowlist shrinks).
-  (default)    build dist/: composed modules, stamped artifacts, manifest.json.
 
 Requirements: `axiom_compose` importable, AXIOM_RULES_ENGINE_BIN pointing at an
 axiom-rules-engine binary, and this script running from (or given) the corpus
@@ -38,6 +32,9 @@ from pathlib import Path
 import yaml
 
 MANIFEST_FORMAT_VERSION = 1
+JURISDICTION_RE = re.compile(r"^us(?:-[a-z0-9]+)*$")
+PROGRAM_SEGMENT_RE = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
+PERIOD_RE = re.compile(r"^[a-z0-9]+(?:[.-][a-z0-9]+)*$")
 
 
 @dataclass
@@ -50,34 +47,147 @@ class SpecBuild:
     artifact_name: str
 
 
+def canonical_program_spec_paths(root: Path) -> list[Path]:
+    """Return only canonical .yaml program specs under jurisdiction roots."""
+
+    legacy_root = root / "programs"
+    if legacy_root.exists() or legacy_root.is_symlink():
+        raise SystemExit(
+            "repository-root programs/ is not canonical; move every spec to "
+            "<jurisdiction>/programs/"
+        )
+
+    paths: list[Path] = []
+    for jurisdiction in sorted(root.iterdir()):
+        if JURISDICTION_RE.fullmatch(jurisdiction.name) is None:
+            continue
+        if jurisdiction.is_symlink():
+            raise SystemExit(f"jurisdiction root must not be a symlink: {jurisdiction}")
+        if not jurisdiction.is_dir():
+            continue
+        programs = jurisdiction / "programs"
+        if not programs.exists():
+            continue
+        if programs.is_symlink() or not programs.is_dir():
+            raise SystemExit(f"canonical program root is not a directory: {programs}")
+        content_paths = sorted(programs.rglob("*"))
+        symlinks = [path for path in content_paths if path.is_symlink()]
+        if symlinks:
+            rendered = ", ".join(path.relative_to(root).as_posix() for path in symlinks)
+            raise SystemExit(f"program roots must not contain symlinks: {rendered}")
+        yaml_like = [
+            path for path in content_paths if path.suffix.lower() in {".yaml", ".yml"}
+        ]
+        invalid_yaml_paths = [
+            path for path in yaml_like if path.suffix != ".yaml" or not path.is_file()
+        ]
+        if invalid_yaml_paths:
+            rendered = ", ".join(
+                path.relative_to(root).as_posix() for path in invalid_yaml_paths
+            )
+            raise SystemExit(
+                f"program specs must be regular files using exact .yaml: {rendered}"
+            )
+        paths.extend(path for path in yaml_like if path.suffix == ".yaml")
+    return paths
+
+
 def discover_specs(root: Path) -> list[SpecBuild]:
     builds: list[SpecBuild] = []
-    for path in sorted((root / "programs").rglob("*.yaml")):
-        if path.name.endswith(".test.yaml"):
-            continue
-        spec = yaml.safe_load(path.read_text())
-        if not isinstance(spec, dict) or "program" not in spec:
-            continue
-        program_field = str(spec["program"])
+    for path in canonical_program_spec_paths(root):
+        relative = path.relative_to(root)
+        try:
+            spec = yaml.safe_load(path.read_text())
+        except (OSError, yaml.YAMLError) as error:
+            raise SystemExit(f"invalid program spec {relative}: {error}") from error
+        if not isinstance(spec, dict):
+            raise SystemExit(f"invalid program spec {relative}: root must be a mapping")
+        program_value = spec.get("program")
+        if not isinstance(program_value, str) or not program_value.strip():
+            raise SystemExit(
+                f"invalid program spec {relative}: program must be a non-empty string"
+            )
+        if program_value != program_value.strip():
+            raise SystemExit(
+                f"invalid canonical program id in {relative}: {program_value!r}"
+            )
+        program_field = program_value
         segments = [s for s in program_field.split("/") if s]
+        if (
+            len(segments) < 2
+            or program_field != "/".join(segments)
+            or any(
+                PROGRAM_SEGMENT_RE.fullmatch(segment) is None for segment in segments
+            )
+        ):
+            raise SystemExit(
+                f"invalid canonical program id in {relative}: {program_field!r}"
+            )
         jurisdiction = segments[0]
         program_id = segments[-1]
-        period = str(spec.get("period", ""))
-        outputs = [str(o) for o in spec.get("outputs", [])]
+        path_jurisdiction = relative.parts[0]
+        if jurisdiction != path_jurisdiction:
+            raise SystemExit(
+                f"program jurisdiction mismatch in {relative}: "
+                f"{program_field!r} != {path_jurisdiction!r}"
+            )
+        expected_parent = Path(*segments[1:])
+        actual_parent = path.parent.relative_to(root / jurisdiction / "programs")
+        if actual_parent != expected_parent:
+            raise SystemExit(
+                f"program path does not match id in {relative}: expected "
+                f"{jurisdiction}/programs/{expected_parent.as_posix()}/"
+            )
+        period_value = spec.get("period")
+        if (
+            not isinstance(period_value, str)
+            or not period_value.strip()
+            or period_value != period_value.strip()
+            or PERIOD_RE.fullmatch(period_value) is None
+        ):
+            raise SystemExit(
+                f"invalid program spec {relative}: period must be a non-empty "
+                "canonical string"
+            )
+        outputs_value = spec.get("outputs")
+        if (
+            not isinstance(outputs_value, list)
+            or not outputs_value
+            or not all(
+                isinstance(output, str)
+                and bool(output.strip())
+                and output == output.strip()
+                for output in outputs_value
+            )
+        ):
+            raise SystemExit(
+                f"invalid program spec {relative}: outputs must be a non-empty "
+                "list of canonical strings"
+            )
+        try:
+            from axiom_compose import load_spec
+
+            load_spec(path)
+        except Exception as error:
+            raise SystemExit(
+                f"invalid axiom-compose ProgramSpec {relative}: {error}"
+            ) from error
         builds.append(
             SpecBuild(
                 spec_path=path.relative_to(root),
                 jurisdiction=jurisdiction,
                 program_id=program_id,
-                period=period,
-                outputs=outputs,
-                artifact_name=f"{jurisdiction}-{program_id}",
+                period=period_value,
+                outputs=outputs_value,
+                artifact_name=f"{program_field.replace('/', '--')}--{period_value}",
             )
         )
     names = [b.artifact_name for b in builds]
     dupes = {n for n in names if names.count(n) > 1}
     if dupes:
         raise SystemExit(f"artifact name collision: {sorted(dupes)}")
+    if not builds:
+        raise SystemExit("no canonical <jurisdiction>/programs/**/*.yaml specs found")
     return builds
 
 
@@ -125,7 +235,11 @@ def compose_spec(root: Path, build: SpecBuild, out_path: Path) -> None:
 
 def engine_compile(root: Path, module: Path, artifact: Path, engine_bin: str) -> str:
     """Run the engine compiler; returns its reported engine_version."""
-    env = dict(os.environ, AXIOM_RULESPEC_REPO_ROOTS=str(root))
+    env = dict(
+        os.environ,
+        AXIOM_RULESPEC_REPO_ROOTS=str(root),
+        AXIOM_RULESPEC_REPO_ROOTS_EXCLUSIVE="1",
+    )
     result = subprocess.run(
         [engine_bin, "compile", "--program", str(module), "--output", str(artifact)],
         capture_output=True,
@@ -144,25 +258,35 @@ def stamp_provenance(artifact: Path, provenance: dict) -> None:
     artifact.write_text(json.dumps(data, indent=2, sort_keys=False) + "\n")
 
 
-def load_allowlist(root: Path) -> set[str]:
-    path = root / "tools" / "known-broken-specs.txt"
-    if not path.exists():
-        return set()
-    return {
-        line.strip()
-        for line in path.read_text().splitlines()
-        if line.strip() and not line.strip().startswith("#")
-    }
-
-
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--root", type=Path, default=Path.cwd())
+    parser.add_argument(
+        "--root",
+        type=Path,
+        required=True,
+        help="Exact rulespec-us checkout containing canonical jurisdiction roots",
+    )
     parser.add_argument("--dist", type=Path, default=None)
-    parser.add_argument("--check", action="store_true")
     args = parser.parse_args()
 
-    root = args.root.resolve()
+    raw_root = args.root
+    if not raw_root.is_absolute():
+        print("--root must be an absolute rulespec-us checkout", file=sys.stderr)
+        return 2
+    try:
+        root = raw_root.resolve(strict=True)
+    except OSError:
+        print(f"--root does not exist: {raw_root}", file=sys.stderr)
+        return 2
+    if root != raw_root or raw_root.is_symlink() or not raw_root.is_dir():
+        print(f"--root must be a real unaliased directory: {raw_root}", file=sys.stderr)
+        return 2
+    if root.name != "rulespec-us":
+        print(
+            f"--root must be named exactly rulespec-us; got {root.name!r}",
+            file=sys.stderr,
+        )
+        return 2
     engine_bin = os.environ.get("AXIOM_RULES_ENGINE_BIN")
     if not engine_bin:
         print("AXIOM_RULES_ENGINE_BIN is not set", file=sys.stderr)
@@ -172,13 +296,11 @@ def main() -> int:
     dist.mkdir(parents=True, exist_ok=True)
 
     builds = discover_specs(root)
-    allowlist = load_allowlist(root)
     corpus = corpus_provenance(root)
     composer = composer_version()
 
     manifest_programs = []
-    unexpected_failures: list[str] = []
-    unexpected_successes: list[str] = []
+    failures: list[str] = []
     engine_version = "unknown"
 
     # Compose and compile in a neutral temp directory OUTSIDE the repo: the
@@ -195,18 +317,14 @@ def main() -> int:
         artifact_path = workdir / f"{build.artifact_name}.compiled.json"
         try:
             compose_spec(root, build, module_path)
-            engine_version = engine_compile(root, module_path, artifact_path, engine_bin)
+            engine_version = engine_compile(
+                root, module_path, artifact_path, engine_bin
+            )
         except Exception as error:
             message = str(error).splitlines()[0][:200]
-            if spec_rel in allowlist:
-                print(f"KNOWN-BROKEN {spec_rel}: {message}")
-            else:
-                print(f"FAIL {spec_rel}: {message}", file=sys.stderr)
-                unexpected_failures.append(spec_rel)
+            print(f"FAIL {spec_rel}: {message}", file=sys.stderr)
+            failures.append(spec_rel)
             continue
-
-        if spec_rel in allowlist:
-            unexpected_successes.append(spec_rel)
 
         provenance = {
             "corpus": corpus,
@@ -252,13 +370,8 @@ def main() -> int:
     }
     (dist / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n")
 
-    if unexpected_successes:
-        print(
-            "NOTE: allowlisted specs now compile — remove from known-broken-specs.txt: "
-            + ", ".join(unexpected_successes)
-        )
-    if unexpected_failures:
-        print(f"{len(unexpected_failures)} spec(s) failed to build", file=sys.stderr)
+    if failures:
+        print(f"{len(failures)} spec(s) failed to build", file=sys.stderr)
         return 1
     print(f"built {len(manifest_programs)}/{len(builds)} programs -> {dist}")
     return 0

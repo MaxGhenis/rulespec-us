@@ -1,0 +1,35 @@
+name: Reverse index
+
+# The reverse index is derived only from atomic RuleSpec modules under
+# legislation/, policies/, regulations/, and statutes/. Declarative
+# <jurisdiction>/programs/ specs belong exclusively to the compose-and-compile
+# pipeline and are never scanned as atomic modules.
+
+on:
+  pull_request:
+    branches: [main]
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reverse-index:
+    name: reverse-index
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout rules repository
+        uses: actions/checkout@v6.0.2
+
+      - name: Set up Python
+        uses: actions/setup-python@v6.2.0
+        with:
+          python-version: "3.14"
+
+      - name: Install PyYAML
+        run: python -m pip install --upgrade pip pyyaml
+
+      - name: Verify provision -> rules reverse index
+        run: python tests/generate_reverse_index.py --check
