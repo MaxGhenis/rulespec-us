@@ -1,0 +1,71 @@
+format: rulespec/v1
+module:
+  proof_validation:
+    required: true
+  source_verification:
+    corpus_citation_path: us/statute/26/469/c/1
+  summary: |-
+    Tax-year-2026 encoding of the trade-or-business branch in section
+    469(c)(1), applied to one owner and one activity at a time. The paragraph
+    requires both an activity involving a trade or business and a taxpayer
+    who does not materially participate in that activity. This output is
+    only that paragraph's predicate, not a complete section 469 passive
+    activity determination.
+
+    OwnerBusinessActivity identifies the owner/activity pair: material
+    participation is with respect to this owner, not a property of the
+    partnership or S corporation shared by all owners. The two inputs are
+    explicit legal facts. In particular, material participation under
+    section 469 is not derived here from hours, employment labels, income,
+    wages, UBIA, or specified-service-trade-or-business status.
+
+    The scope does not resolve rental treatment, activity grouping,
+    limited-partner rules, spouse participation, section 469(c)(3) current
+    or prior oil/gas working interests, recharacterization, or the section
+    469 loss and credit limitations. A caller needing those rules
+    must not treat this bounded paragraph predicate as the final answer.
+  deferred_outputs:
+    - output: us:statutes/26/469/c/1#owner_materially_participates_under_section_469
+      reason: |-
+        Section 469(c)(1)(B) consumes material participation as a legal fact.
+        Determining it under section 469(h) and applicable regulations,
+        including limited-partner and spouse-participation rules, is outside
+        this atom. No hours-only or SSTB proxy is substituted for that fact.
+    - output: us:statutes/26/469/c/1#passive_activity_after_all_section_469_rules
+      reason: |-
+        The rental branch, oil/gas working-interest exception and succeeding-
+        year rule in section 469(c)(3), grouping, recharacterization, and
+        other applicable section 469 rules are not composed here. Neither a
+        true nor a false paragraph (c)(1) predicate establishes final passive
+        status under every other provision of section 469.
+rules:
+  - name: passive_trade_or_business_activity_with_respect_to_owner
+    kind: derived
+    entity: OwnerBusinessActivity
+    dtype: Judgment
+    period: Year
+    source: 26 USC 469(c)(1)(A)-(B)
+    metadata:
+      proof:
+        atoms:
+          - path: versions[0].formula
+            kind: definition
+            source:
+              corpus_citation_path: us/statute/26/469/c/1
+              excerpt: 'The term “passive activity” means any activity'
+          - path: versions[0].formula
+            kind: condition
+            source:
+              corpus_citation_path: us/statute/26/469/c/1
+              excerpt: '(A) which involves the conduct of any trade or business, and'
+          - path: versions[0].formula
+            kind: condition
+            source:
+              corpus_citation_path: us/statute/26/469/c/1
+              excerpt: '(B) in which the taxpayer does not materially participate.'
+    versions:
+      - effective_from: '2026-01-01'
+        effective_to: '2026-12-31'
+        formula: |-
+          activity_is_trade_or_business
+          and not owner_materially_participates_under_section_469

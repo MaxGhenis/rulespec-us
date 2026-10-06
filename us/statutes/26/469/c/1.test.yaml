@@ -1,0 +1,62 @@
+# Source: 26 USC 469(c)(1)(A)-(B), exact corpus paragraph
+# us/statute/26/469/c/1. These cases exercise only that paragraph's
+# trade-or-business predicate, not rental or other section 469 branches.
+# All four truth-table rows are necessary: they kill removal of either
+# condition, removal of NOT, replacement of AND by OR, and constant results.
+
+- name: trade-or-business-without-owner-material-participation
+  period: &tax_year_2026
+    period_kind: tax_year
+    start: '2026-01-01'
+    end: '2026-12-31'
+  input:
+    us:statutes/26/469/c/1#input.activity_is_trade_or_business: true
+    us:statutes/26/469/c/1#input.owner_materially_participates_under_section_469: false
+  output:
+    us:statutes/26/469/c/1#passive_trade_or_business_activity_with_respect_to_owner: holds
+
+- name: same-trade-or-business-with-owner-material-participation
+  # Change only the owner-specific participation fact from the preceding case.
+  period: *tax_year_2026
+  input:
+    us:statutes/26/469/c/1#input.activity_is_trade_or_business: true
+    us:statutes/26/469/c/1#input.owner_materially_participates_under_section_469: true
+  output:
+    us:statutes/26/469/c/1#passive_trade_or_business_activity_with_respect_to_owner: not_holds
+
+- name: absence-of-participation-alone-does-not-satisfy-paragraph-c-1
+  # Adversarial: failing (A) cannot be cured by satisfying (B).
+  period: *tax_year_2026
+  input:
+    us:statutes/26/469/c/1#input.activity_is_trade_or_business: false
+    us:statutes/26/469/c/1#input.owner_materially_participates_under_section_469: false
+  output:
+    us:statutes/26/469/c/1#passive_trade_or_business_activity_with_respect_to_owner: not_holds
+
+- name: neither-paragraph-c-1-condition-satisfied
+  period: *tax_year_2026
+  input:
+    us:statutes/26/469/c/1#input.activity_is_trade_or_business: false
+    us:statutes/26/469/c/1#input.owner_materially_participates_under_section_469: true
+  output:
+    us:statutes/26/469/c/1#passive_trade_or_business_activity_with_respect_to_owner: not_holds
+
+- name: owner-activity-facts-remain-row-specific
+  # Different owners or activities must not inherit one another's legal facts.
+  period: *tax_year_2026
+  tables:
+    OwnerBusinessActivity:
+      - us:statutes/26/469/c/1#input.activity_is_trade_or_business: true
+        us:statutes/26/469/c/1#input.owner_materially_participates_under_section_469: false
+      - us:statutes/26/469/c/1#input.activity_is_trade_or_business: true
+        us:statutes/26/469/c/1#input.owner_materially_participates_under_section_469: true
+      - us:statutes/26/469/c/1#input.activity_is_trade_or_business: false
+        us:statutes/26/469/c/1#input.owner_materially_participates_under_section_469: false
+      - us:statutes/26/469/c/1#input.activity_is_trade_or_business: false
+        us:statutes/26/469/c/1#input.owner_materially_participates_under_section_469: true
+  output:
+    us:statutes/26/469/c/1#passive_trade_or_business_activity_with_respect_to_owner:
+      - holds
+      - not_holds
+      - not_holds
+      - not_holds
