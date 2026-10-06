@@ -1,534 +1,536 @@
-- name: top_n_selection_and_calendar_year_month_conversion
+- name: auto_output_disability_dropout_years
+  period:
+    period_kind: tax_year
+    start: '1979-01-01'
+    end: '1979-12-31'
+  input:
+    ? us:statutes/42/415/b#input.at_least_twelve_consecutive_months_without_disability_or_old_age_benefit_before_current_eligibility
+    : false
+    us:statutes/42/415/b#input.computation_base_year: 0
+    us:statutes/42/415/b#input.computation_base_year_is_entirely_in_period_of_disability: false
+    us:statutes/42/415/b#input.creditable_earnings_for_computation_base_year: 0
+    us:statutes/42/415/b#input.elapsed_year_is_partly_in_period_of_disability: false
+    us:statutes/42/415/b#input.indexing_year_for_aime: 0
+    us:statutes/42/415/b#input.individual_is_entitled_to_disability_insurance_benefit: false
+    us:statutes/42/415/b#input.individual_is_entitled_to_old_age_insurance_benefit: false
+    us:statutes/42/415/b#input.individual_previously_entitled_to_disability_insurance_benefit: false
+    us:statutes/42/415/b#input.national_average_wage_index_for_computation_base_year: 0
+    us:statutes/42/415/b#input.national_average_wage_index_for_indexing_year: 0
+    us:statutes/42/415/b#input.year_individual_attained_age_21: 0
+    us:statutes/42/415/b#input.year_individual_attained_age_62: 0
+    us:statutes/42/415/b#input.year_of_death_or_later_sentinel: 0
+    us:statutes/42/415/b#input.year_of_first_old_age_entitlement: 0
+  output:
+    us:statutes/42/415/b#disability_dropout_years: 0
+- name: ordinary_old_age_dropout_uses_exclusive_elapsed_year_endpoints
   period:
     period_kind: custom
     name: calendar_year
     start: '2026-01-01'
     end: '2026-12-31'
+  input:
+    us:statutes/42/415/b#input.individual_is_entitled_to_old_age_insurance_benefit: true
+    us:statutes/42/415/b#input.individual_is_entitled_to_disability_insurance_benefit: false
+    us:statutes/42/415/b#input.individual_previously_entitled_to_disability_insurance_benefit: false
+    ? us:statutes/42/415/b#input.at_least_twelve_consecutive_months_without_disability_or_old_age_benefit_before_current_eligibility
+    : false
+    us:statutes/42/415/b#input.year_individual_attained_age_21: 2010
+    us:statutes/42/415/b#input.year_individual_attained_age_62: 2051
+    us:statutes/42/415/b#input.year_of_death_or_later_sentinel: 2018
+    us:statutes/42/415/b#input.elapsed_year_is_partly_in_period_of_disability: false
   output:
-    us:statutes/42/415/b#old_age_benefit_computation_year_earnings_total:
-    - '111600'
-    - '186000'
-    us:statutes/42/415/b#average_indexed_monthly_earnings:
-    - '3100'
-    - '3875'
+    us:statutes/42/415/b#disability_dropout_rule_applies: not_holds
+    us:statutes/42/415/b#elapsed_years_for_old_age_benefit_computation: 7
+    us:statutes/42/415/b#disability_dropout_years: 0
+    us:statutes/42/415/b#old_age_benefit_computation_year_count: 2
+- name: disability_dropout_continues_to_old_age_without_twelve_month_interruption
+  period:
+    period_kind: custom
+    name: calendar_year
+    start: '2026-01-01'
+    end: '2026-12-31'
+  input:
+    us:statutes/42/415/b#input.individual_is_entitled_to_old_age_insurance_benefit: true
+    us:statutes/42/415/b#input.individual_is_entitled_to_disability_insurance_benefit: false
+    us:statutes/42/415/b#input.individual_previously_entitled_to_disability_insurance_benefit: true
+    ? us:statutes/42/415/b#input.at_least_twelve_consecutive_months_without_disability_or_old_age_benefit_before_current_eligibility
+    : false
+    us:statutes/42/415/b#input.year_individual_attained_age_21: 2000
+    us:statutes/42/415/b#input.year_individual_attained_age_62: 2041
+    us:statutes/42/415/b#input.year_of_death_or_later_sentinel: 2025
+    us:statutes/42/415/b#input.elapsed_year_is_partly_in_period_of_disability: false
+  output:
+    us:statutes/42/415/b#disability_dropout_rule_applies: holds
+    us:statutes/42/415/b#elapsed_years_for_old_age_benefit_computation: 24
+    us:statutes/42/415/b#disability_dropout_years: 4
+    us:statutes/42/415/b#old_age_benefit_computation_year_count: 20
+- name: disability_dropout_stops_after_twelve_month_interruption
+  period:
+    period_kind: custom
+    name: calendar_year
+    start: '2026-01-01'
+    end: '2026-12-31'
+  input:
+    us:statutes/42/415/b#input.individual_is_entitled_to_old_age_insurance_benefit: true
+    us:statutes/42/415/b#input.individual_is_entitled_to_disability_insurance_benefit: false
+    us:statutes/42/415/b#input.individual_previously_entitled_to_disability_insurance_benefit: true
+    ? us:statutes/42/415/b#input.at_least_twelve_consecutive_months_without_disability_or_old_age_benefit_before_current_eligibility
+    : true
+    us:statutes/42/415/b#input.year_individual_attained_age_21: 2000
+    us:statutes/42/415/b#input.year_individual_attained_age_62: 2041
+    us:statutes/42/415/b#input.year_of_death_or_later_sentinel: 2025
+    us:statutes/42/415/b#input.elapsed_year_is_partly_in_period_of_disability: false
+  output:
+    us:statutes/42/415/b#disability_dropout_rule_applies: not_holds
+    us:statutes/42/415/b#elapsed_years_for_old_age_benefit_computation: 24
+    us:statutes/42/415/b#disability_dropout_years: 0
+    us:statutes/42/415/b#old_age_benefit_computation_year_count: 19
+- name: selected_earnings_use_same_count_for_selection_and_calendar_month_conversion
+  period:
+    period_kind: custom
+    name: calendar_year
+    start: '2026-01-01'
+    end: '2026-12-31'
   lifetime:
     entity: Person
     arithmetic: decimal
-    periods:
-    - period_kind: custom
-      name: calendar_year
-      start: '2022-01-01'
-      end: '2022-12-31'
-    - period_kind: custom
-      name: calendar_year
-      start: '2023-01-01'
-      end: '2023-12-31'
-    - period_kind: custom
-      name: calendar_year
-      start: '2024-01-01'
-      end: '2024-12-31'
-    - period_kind: custom
-      name: calendar_year
-      start: '2025-01-01'
-      end: '2025-12-31'
-    - period_kind: custom
+    calculation_period:
+      period_kind: custom
       name: calendar_year
       start: '2026-01-01'
       end: '2026-12-31'
+    periods:
+    - period_kind: custom
+      name: calendar_year
+      start: '2015-01-01'
+      end: '2015-12-31'
+    - period_kind: custom
+      name: calendar_year
+      start: '2016-01-01'
+      end: '2016-12-31'
+    - period_kind: custom
+      name: calendar_year
+      start: '2017-01-01'
+      end: '2017-12-31'
     batches:
-    - row_count: 2
+    - row_count: 1
       entity_ids:
-      - person_a
-      - person_b
+      - person_1
       inputs:
+        us:statutes/42/415/b#input.individual_is_entitled_to_old_age_insurance_benefit:
+          kind: bool
+          values:
+          - true
+        us:statutes/42/415/b#input.individual_is_entitled_to_disability_insurance_benefit:
+          kind: bool
+          values:
+          - false
+        us:statutes/42/415/b#input.individual_previously_entitled_to_disability_insurance_benefit:
+          kind: bool
+          values:
+          - false
+        ? us:statutes/42/415/b#input.at_least_twelve_consecutive_months_without_disability_or_old_age_benefit_before_current_eligibility
+        : kind: bool
+          values:
+          - false
         us:statutes/42/415/b#input.computation_base_year:
           kind: integer
           values:
-          - 2022
-          - 2022
+          - 2015
         us:statutes/42/415/b#input.creditable_earnings_for_computation_base_year:
           kind: decimal
           values:
-          - '12000'
-          - '36000'
-        us:statutes/42/415/b#input.indexing_year_for_aime:
-          kind: integer
-          values:
-          - 2024
-          - 2024
+          - '1000'
         us:statutes/42/415/b#input.national_average_wage_index_for_computation_base_year:
           kind: decimal
           values:
-          - '50000'
-          - '50000'
+          - '1'
         us:statutes/42/415/b#input.national_average_wage_index_for_indexing_year:
           kind: decimal
           values:
-          - '50000'
-          - '50000'
-        us:statutes/42/415/b#input.computation_base_year_upper_boundary_year:
+          - '1'
+        us:statutes/42/415/b#input.indexing_year_for_aime:
           kind: integer
           values:
-          - 2027
-          - 2027
+          - 2017
+        us:statutes/42/415/b#input.year_individual_attained_age_21:
+          kind: integer
+          values:
+          - 2010
+        us:statutes/42/415/b#input.year_individual_attained_age_62:
+          kind: integer
+          values:
+          - 2051
+        us:statutes/42/415/b#input.year_of_death_or_later_sentinel:
+          kind: integer
+          values:
+          - 2018
+        us:statutes/42/415/b#input.year_of_first_old_age_entitlement:
+          kind: integer
+          values:
+          - 2018
         us:statutes/42/415/b#input.computation_base_year_is_entirely_in_period_of_disability:
           kind: bool
           values:
           - false
-          - false
-        us:statutes/42/415/b#input.computation_base_year_is_treated_as_last_year_under_subsection_f_2_C:
+        us:statutes/42/415/b#input.elapsed_year_is_partly_in_period_of_disability:
           kind: bool
           values:
           - false
-          - false
-        us:statutes/42/415/b#input.year_individual_attained_age_21:
-          kind: integer
-          values:
-          - 2018
-          - 2017
-        us:statutes/42/415/b#input.year_individual_attained_age_62:
-          kind: integer
-          values:
-          - 2027
-          - 2027
-        us:statutes/42/415/b#input.year_of_death_or_later_sentinel:
-          kind: integer
-          values:
-          - 2030
-          - 2030
-        us:statutes/42/415/b#input.calendar_years_with_any_part_in_period_of_disability_within_elapsed_year_interval:
-          kind: integer
-          values:
-          - 0
-          - 0
-        us:statutes/42/415/b#input.disability_dropout_rule_applies_to_current_eligibility:
-          kind: bool
-          values:
-          - false
-          - false
-        us:statutes/42/415/b#input.qualifying_child_care_dropout_year_count:
-          kind: integer
-          values:
-          - 0
-          - 0
-        us:statutes/42/415/b#input.child_care_dropout_would_not_lower_primary_insurance_amount:
-          kind: bool
-          values:
-          - false
-          - false
-    - row_count: 2
+    - row_count: 1
       entity_ids:
-      - person_a
-      - person_b
+      - person_1
       inputs:
+        us:statutes/42/415/b#input.individual_is_entitled_to_old_age_insurance_benefit:
+          kind: bool
+          values:
+          - true
+        us:statutes/42/415/b#input.individual_is_entitled_to_disability_insurance_benefit:
+          kind: bool
+          values:
+          - false
+        us:statutes/42/415/b#input.individual_previously_entitled_to_disability_insurance_benefit:
+          kind: bool
+          values:
+          - false
+        ? us:statutes/42/415/b#input.at_least_twelve_consecutive_months_without_disability_or_old_age_benefit_before_current_eligibility
+        : kind: bool
+          values:
+          - false
         us:statutes/42/415/b#input.computation_base_year:
           kind: integer
           values:
-          - 2023
-          - 2023
+          - 2016
         us:statutes/42/415/b#input.creditable_earnings_for_computation_base_year:
           kind: decimal
           values:
-          - '24000'
-          - '42000'
-        us:statutes/42/415/b#input.indexing_year_for_aime:
-          kind: integer
-          values:
-          - 2024
-          - 2024
+          - '2000'
         us:statutes/42/415/b#input.national_average_wage_index_for_computation_base_year:
           kind: decimal
           values:
-          - '50000'
-          - '50000'
+          - '1'
         us:statutes/42/415/b#input.national_average_wage_index_for_indexing_year:
           kind: decimal
           values:
-          - '50000'
-          - '50000'
-        us:statutes/42/415/b#input.computation_base_year_upper_boundary_year:
+          - '1'
+        us:statutes/42/415/b#input.indexing_year_for_aime:
           kind: integer
           values:
-          - 2027
-          - 2027
+          - 2017
+        us:statutes/42/415/b#input.year_individual_attained_age_21:
+          kind: integer
+          values:
+          - 2010
+        us:statutes/42/415/b#input.year_individual_attained_age_62:
+          kind: integer
+          values:
+          - 2051
+        us:statutes/42/415/b#input.year_of_death_or_later_sentinel:
+          kind: integer
+          values:
+          - 2018
+        us:statutes/42/415/b#input.year_of_first_old_age_entitlement:
+          kind: integer
+          values:
+          - 2018
         us:statutes/42/415/b#input.computation_base_year_is_entirely_in_period_of_disability:
           kind: bool
           values:
           - false
-          - false
-        us:statutes/42/415/b#input.computation_base_year_is_treated_as_last_year_under_subsection_f_2_C:
+        us:statutes/42/415/b#input.elapsed_year_is_partly_in_period_of_disability:
           kind: bool
           values:
           - false
-          - false
-        us:statutes/42/415/b#input.year_individual_attained_age_21:
-          kind: integer
-          values:
-          - 2018
-          - 2017
-        us:statutes/42/415/b#input.year_individual_attained_age_62:
-          kind: integer
-          values:
-          - 2027
-          - 2027
-        us:statutes/42/415/b#input.year_of_death_or_later_sentinel:
-          kind: integer
-          values:
-          - 2030
-          - 2030
-        us:statutes/42/415/b#input.calendar_years_with_any_part_in_period_of_disability_within_elapsed_year_interval:
-          kind: integer
-          values:
-          - 0
-          - 0
-        us:statutes/42/415/b#input.disability_dropout_rule_applies_to_current_eligibility:
-          kind: bool
-          values:
-          - false
-          - false
-        us:statutes/42/415/b#input.qualifying_child_care_dropout_year_count:
-          kind: integer
-          values:
-          - 0
-          - 0
-        us:statutes/42/415/b#input.child_care_dropout_would_not_lower_primary_insurance_amount:
-          kind: bool
-          values:
-          - false
-          - false
-    - row_count: 2
+    - row_count: 1
       entity_ids:
-      - person_a
-      - person_b
+      - person_1
       inputs:
+        us:statutes/42/415/b#input.individual_is_entitled_to_old_age_insurance_benefit:
+          kind: bool
+          values:
+          - true
+        us:statutes/42/415/b#input.individual_is_entitled_to_disability_insurance_benefit:
+          kind: bool
+          values:
+          - false
+        us:statutes/42/415/b#input.individual_previously_entitled_to_disability_insurance_benefit:
+          kind: bool
+          values:
+          - false
+        ? us:statutes/42/415/b#input.at_least_twelve_consecutive_months_without_disability_or_old_age_benefit_before_current_eligibility
+        : kind: bool
+          values:
+          - false
         us:statutes/42/415/b#input.computation_base_year:
           kind: integer
           values:
-          - 2024
-          - 2024
+          - 2017
         us:statutes/42/415/b#input.creditable_earnings_for_computation_base_year:
           kind: decimal
           values:
-          - '36000'
-          - '48000'
-        us:statutes/42/415/b#input.indexing_year_for_aime:
-          kind: integer
-          values:
-          - 2024
-          - 2024
+          - '2001'
         us:statutes/42/415/b#input.national_average_wage_index_for_computation_base_year:
           kind: decimal
           values:
-          - '50000'
-          - '50000'
+          - '1'
         us:statutes/42/415/b#input.national_average_wage_index_for_indexing_year:
           kind: decimal
           values:
-          - '50000'
-          - '50000'
-        us:statutes/42/415/b#input.computation_base_year_upper_boundary_year:
+          - '1'
+        us:statutes/42/415/b#input.indexing_year_for_aime:
           kind: integer
           values:
-          - 2027
-          - 2027
+          - 2017
+        us:statutes/42/415/b#input.year_individual_attained_age_21:
+          kind: integer
+          values:
+          - 2010
+        us:statutes/42/415/b#input.year_individual_attained_age_62:
+          kind: integer
+          values:
+          - 2051
+        us:statutes/42/415/b#input.year_of_death_or_later_sentinel:
+          kind: integer
+          values:
+          - 2018
+        us:statutes/42/415/b#input.year_of_first_old_age_entitlement:
+          kind: integer
+          values:
+          - 2018
         us:statutes/42/415/b#input.computation_base_year_is_entirely_in_period_of_disability:
           kind: bool
           values:
           - false
-          - false
-        us:statutes/42/415/b#input.computation_base_year_is_treated_as_last_year_under_subsection_f_2_C:
+        us:statutes/42/415/b#input.elapsed_year_is_partly_in_period_of_disability:
           kind: bool
           values:
           - false
-          - false
-        us:statutes/42/415/b#input.year_individual_attained_age_21:
-          kind: integer
-          values:
-          - 2018
-          - 2017
-        us:statutes/42/415/b#input.year_individual_attained_age_62:
-          kind: integer
-          values:
-          - 2027
-          - 2027
-        us:statutes/42/415/b#input.year_of_death_or_later_sentinel:
-          kind: integer
-          values:
-          - 2030
-          - 2030
-        us:statutes/42/415/b#input.calendar_years_with_any_part_in_period_of_disability_within_elapsed_year_interval:
-          kind: integer
-          values:
-          - 0
-          - 0
-        us:statutes/42/415/b#input.disability_dropout_rule_applies_to_current_eligibility:
-          kind: bool
-          values:
-          - false
-          - false
-        us:statutes/42/415/b#input.qualifying_child_care_dropout_year_count:
-          kind: integer
-          values:
-          - 0
-          - 0
-        us:statutes/42/415/b#input.child_care_dropout_would_not_lower_primary_insurance_amount:
-          kind: bool
-          values:
-          - false
-          - false
-    - row_count: 2
-      entity_ids:
-      - person_a
-      - person_b
-      inputs:
-        us:statutes/42/415/b#input.computation_base_year:
-          kind: integer
-          values:
-          - 2025
-          - 2025
-        us:statutes/42/415/b#input.creditable_earnings_for_computation_base_year:
-          kind: decimal
-          values:
-          - '37200'
-          - '48000'
-        us:statutes/42/415/b#input.indexing_year_for_aime:
-          kind: integer
-          values:
-          - 2024
-          - 2024
-        us:statutes/42/415/b#input.national_average_wage_index_for_computation_base_year:
-          kind: decimal
-          values:
-          - '50000'
-          - '50000'
-        us:statutes/42/415/b#input.national_average_wage_index_for_indexing_year:
-          kind: decimal
-          values:
-          - '50000'
-          - '50000'
-        us:statutes/42/415/b#input.computation_base_year_upper_boundary_year:
-          kind: integer
-          values:
-          - 2027
-          - 2027
-        us:statutes/42/415/b#input.computation_base_year_is_entirely_in_period_of_disability:
-          kind: bool
-          values:
-          - false
-          - false
-        us:statutes/42/415/b#input.computation_base_year_is_treated_as_last_year_under_subsection_f_2_C:
-          kind: bool
-          values:
-          - false
-          - false
-        us:statutes/42/415/b#input.year_individual_attained_age_21:
-          kind: integer
-          values:
-          - 2018
-          - 2017
-        us:statutes/42/415/b#input.year_individual_attained_age_62:
-          kind: integer
-          values:
-          - 2027
-          - 2027
-        us:statutes/42/415/b#input.year_of_death_or_later_sentinel:
-          kind: integer
-          values:
-          - 2030
-          - 2030
-        us:statutes/42/415/b#input.calendar_years_with_any_part_in_period_of_disability_within_elapsed_year_interval:
-          kind: integer
-          values:
-          - 0
-          - 0
-        us:statutes/42/415/b#input.disability_dropout_rule_applies_to_current_eligibility:
-          kind: bool
-          values:
-          - false
-          - false
-        us:statutes/42/415/b#input.qualifying_child_care_dropout_year_count:
-          kind: integer
-          values:
-          - 0
-          - 0
-        us:statutes/42/415/b#input.child_care_dropout_would_not_lower_primary_insurance_amount:
-          kind: bool
-          values:
-          - false
-          - false
-    - row_count: 2
-      entity_ids:
-      - person_a
-      - person_b
-      inputs:
-        us:statutes/42/415/b#input.computation_base_year:
-          kind: integer
-          values:
-          - 2026
-          - 2026
-        us:statutes/42/415/b#input.creditable_earnings_for_computation_base_year:
-          kind: decimal
-          values:
-          - '38400'
-          - '48000'
-        us:statutes/42/415/b#input.indexing_year_for_aime:
-          kind: integer
-          values:
-          - 2024
-          - 2024
-        us:statutes/42/415/b#input.national_average_wage_index_for_computation_base_year:
-          kind: decimal
-          values:
-          - '50000'
-          - '50000'
-        us:statutes/42/415/b#input.national_average_wage_index_for_indexing_year:
-          kind: decimal
-          values:
-          - '50000'
-          - '50000'
-        us:statutes/42/415/b#input.computation_base_year_upper_boundary_year:
-          kind: integer
-          values:
-          - 2027
-          - 2027
-        us:statutes/42/415/b#input.computation_base_year_is_entirely_in_period_of_disability:
-          kind: bool
-          values:
-          - false
-          - false
-        us:statutes/42/415/b#input.computation_base_year_is_treated_as_last_year_under_subsection_f_2_C:
-          kind: bool
-          values:
-          - false
-          - false
-        us:statutes/42/415/b#input.year_individual_attained_age_21:
-          kind: integer
-          values:
-          - 2018
-          - 2017
-        us:statutes/42/415/b#input.year_individual_attained_age_62:
-          kind: integer
-          values:
-          - 2027
-          - 2027
-        us:statutes/42/415/b#input.year_of_death_or_later_sentinel:
-          kind: integer
-          values:
-          - 2030
-          - 2030
-        us:statutes/42/415/b#input.calendar_years_with_any_part_in_period_of_disability_within_elapsed_year_interval:
-          kind: integer
-          values:
-          - 0
-          - 0
-        us:statutes/42/415/b#input.disability_dropout_rule_applies_to_current_eligibility:
-          kind: bool
-          values:
-          - false
-          - false
-        us:statutes/42/415/b#input.qualifying_child_care_dropout_year_count:
-          kind: integer
-          values:
-          - 0
-          - 0
-        us:statutes/42/415/b#input.child_care_dropout_would_not_lower_primary_insurance_amount:
-          kind: bool
-          values:
-          - false
-          - false
-- name: exclusive_elapsed_year_boundaries_and_disability_exclusion
-  period:
-    period_kind: custom
-    name: calendar_year
-    start: '2026-01-01'
-    end: '2026-12-31'
-  input:
-    us:statutes/42/415/b#input.year_individual_attained_age_21: 1991
-    us:statutes/42/415/b#input.year_individual_attained_age_62: 2032
-    us:statutes/42/415/b#input.year_of_death_or_later_sentinel: 2040
-    us:statutes/42/415/b#input.calendar_years_with_any_part_in_period_of_disability_within_elapsed_year_interval: 2
-    us:statutes/42/415/b#input.disability_dropout_rule_applies_to_current_eligibility: false
-    us:statutes/42/415/b#input.qualifying_child_care_dropout_year_count: 0
-    us:statutes/42/415/b#input.child_care_dropout_would_not_lower_primary_insurance_amount: false
   output:
-    us:statutes/42/415/b#elapsed_years_for_old_age_benefit_computation: 38
-    us:statutes/42/415/b#old_age_benefit_computation_year_count: 33
-- name: disability_dropout_continues_with_child_care_adjustment
+    us:statutes/42/415/b#old_age_benefit_computation_year_earnings_total: '4001'
+    us:statutes/42/415/b#average_indexed_monthly_earnings: '166'
+- name: source_period_scalar_snapshot
   period:
-    period_kind: custom
-    name: calendar_year
-    start: '2026-01-01'
-    end: '2026-12-31'
-  input:
-    us:statutes/42/415/b#input.year_individual_attained_age_21: 1980
-    us:statutes/42/415/b#input.year_individual_attained_age_62: 2021
-    us:statutes/42/415/b#input.year_of_death_or_later_sentinel: 2030
-    us:statutes/42/415/b#input.calendar_years_with_any_part_in_period_of_disability_within_elapsed_year_interval: 0
-    us:statutes/42/415/b#input.disability_dropout_rule_applies_to_current_eligibility: true
-    us:statutes/42/415/b#input.qualifying_child_care_dropout_year_count: 2
-    us:statutes/42/415/b#input.child_care_dropout_would_not_lower_primary_insurance_amount: true
-  output:
-    us:statutes/42/415/b#elapsed_years_for_old_age_benefit_computation: 40
-    us:statutes/42/415/b#old_age_benefit_computation_year_count: 33
-- name: computation_base_year_eligibility_and_indexing
-  period:
-    period_kind: custom
-    name: calendar_year
-    start: '2026-01-01'
-    end: '2026-12-31'
-  input:
-    us:statutes/42/415/b#input.computation_base_year: 2020
-    us:statutes/42/415/b#input.creditable_earnings_for_computation_base_year: 60000
-    us:statutes/42/415/b#input.indexing_year_for_aime: 2022
-    us:statutes/42/415/b#input.national_average_wage_index_for_computation_base_year: 50000
-    us:statutes/42/415/b#input.national_average_wage_index_for_indexing_year: 60000
-    us:statutes/42/415/b#input.computation_base_year_upper_boundary_year: 2026
-    us:statutes/42/415/b#input.computation_base_year_is_entirely_in_period_of_disability: false
-    us:statutes/42/415/b#input.computation_base_year_is_treated_as_last_year_under_subsection_f_2_C: false
-  output:
-    us:statutes/42/415/b#computation_base_year_is_eligible: holds
-    us:statutes/42/415/b#indexed_creditable_earnings_for_computation_base_year: 72000
-- name: statutory_computation_year_parameters
-  period:
-    period_kind: custom
-    name: calendar_year
-    start: '2026-01-01'
-    end: '2026-12-31'
+    period_kind: tax_year
+    start: '1979-01-01'
+    end: '1979-12-31'
   input: {}
   output:
     us:statutes/42/415/b#old_age_benefit_computation_year_dropout_years: 5
     us:statutes/42/415/b#minimum_benefit_computation_years: 2
     us:statutes/42/415/b#elapsed_years_baseline_year: 1950
     us:statutes/42/415/b#disability_dropout_fraction_denominator: 5
-    us:statutes/42/415/b#maximum_disability_dropout_years: 5
-    us:statutes/42/415/b#disability_interruption_months: 12
-    us:statutes/42/415/b#maximum_child_care_dropout_years: 3
-    us:statutes/42/415/b#child_care_age_limit_years: 3
-    us:statutes/42/415/b#elapsed_years_age_21_threshold: 21
-    us:statutes/42/415/b#elapsed_years_age_62_threshold: 62
-    us:statutes/42/415/b#elapsed_years_early_upper_boundary_year: 1960
-- name: auto_zero_indexed_creditable_earnings_for_computation_base_year
+    us:statutes/42/415/b#disability_dropout_year_limit: 5
+- name: selected_earnings_are_divided_by_calendar_months_and_rounded_down
+  period:
+    period_kind: custom
+    name: calendar_year
+    start: '2026-01-01'
+    end: '2026-12-31'
+  lifetime:
+    entity: Person
+    arithmetic: decimal
+    calculation_period:
+      period_kind: custom
+      name: calendar_year
+      start: '2026-01-01'
+      end: '2026-12-31'
+    periods:
+    - period_kind: custom
+      name: calendar_year
+      start: '2015-01-01'
+      end: '2015-12-31'
+    - period_kind: custom
+      name: calendar_year
+      start: '2016-01-01'
+      end: '2016-12-31'
+    batches:
+    - row_count: 1
+      entity_ids:
+      - person_1
+      inputs:
+        us:statutes/42/415/b#input.individual_is_entitled_to_old_age_insurance_benefit:
+          kind: bool
+          values:
+          - true
+        us:statutes/42/415/b#input.individual_is_entitled_to_disability_insurance_benefit:
+          kind: bool
+          values:
+          - false
+        us:statutes/42/415/b#input.individual_previously_entitled_to_disability_insurance_benefit:
+          kind: bool
+          values:
+          - false
+        ? us:statutes/42/415/b#input.at_least_twelve_consecutive_months_without_disability_or_old_age_benefit_before_current_eligibility
+        : kind: bool
+          values:
+          - false
+        us:statutes/42/415/b#input.computation_base_year:
+          kind: integer
+          values:
+          - 2015
+        us:statutes/42/415/b#input.creditable_earnings_for_computation_base_year:
+          kind: decimal
+          values:
+          - '1000'
+        us:statutes/42/415/b#input.national_average_wage_index_for_computation_base_year:
+          kind: decimal
+          values:
+          - '1'
+        us:statutes/42/415/b#input.national_average_wage_index_for_indexing_year:
+          kind: decimal
+          values:
+          - '1'
+        us:statutes/42/415/b#input.indexing_year_for_aime:
+          kind: integer
+          values:
+          - 2017
+        us:statutes/42/415/b#input.year_individual_attained_age_21:
+          kind: integer
+          values:
+          - 2010
+        us:statutes/42/415/b#input.year_individual_attained_age_62:
+          kind: integer
+          values:
+          - 2051
+        us:statutes/42/415/b#input.year_of_death_or_later_sentinel:
+          kind: integer
+          values:
+          - 2018
+        us:statutes/42/415/b#input.year_of_first_old_age_entitlement:
+          kind: integer
+          values:
+          - 2018
+        us:statutes/42/415/b#input.computation_base_year_is_entirely_in_period_of_disability:
+          kind: bool
+          values:
+          - false
+        us:statutes/42/415/b#input.elapsed_year_is_partly_in_period_of_disability:
+          kind: bool
+          values:
+          - false
+    - row_count: 1
+      entity_ids:
+      - person_1
+      inputs:
+        us:statutes/42/415/b#input.individual_is_entitled_to_old_age_insurance_benefit:
+          kind: bool
+          values:
+          - true
+        us:statutes/42/415/b#input.individual_is_entitled_to_disability_insurance_benefit:
+          kind: bool
+          values:
+          - false
+        us:statutes/42/415/b#input.individual_previously_entitled_to_disability_insurance_benefit:
+          kind: bool
+          values:
+          - false
+        ? us:statutes/42/415/b#input.at_least_twelve_consecutive_months_without_disability_or_old_age_benefit_before_current_eligibility
+        : kind: bool
+          values:
+          - false
+        us:statutes/42/415/b#input.computation_base_year:
+          kind: integer
+          values:
+          - 2016
+        us:statutes/42/415/b#input.creditable_earnings_for_computation_base_year:
+          kind: decimal
+          values:
+          - '2001'
+        us:statutes/42/415/b#input.national_average_wage_index_for_computation_base_year:
+          kind: decimal
+          values:
+          - '1'
+        us:statutes/42/415/b#input.national_average_wage_index_for_indexing_year:
+          kind: decimal
+          values:
+          - '1'
+        us:statutes/42/415/b#input.indexing_year_for_aime:
+          kind: integer
+          values:
+          - 2017
+        us:statutes/42/415/b#input.year_individual_attained_age_21:
+          kind: integer
+          values:
+          - 2010
+        us:statutes/42/415/b#input.year_individual_attained_age_62:
+          kind: integer
+          values:
+          - 2051
+        us:statutes/42/415/b#input.year_of_death_or_later_sentinel:
+          kind: integer
+          values:
+          - 2018
+        us:statutes/42/415/b#input.year_of_first_old_age_entitlement:
+          kind: integer
+          values:
+          - 2018
+        us:statutes/42/415/b#input.computation_base_year_is_entirely_in_period_of_disability:
+          kind: bool
+          values:
+          - false
+        us:statutes/42/415/b#input.elapsed_year_is_partly_in_period_of_disability:
+          kind: bool
+          values:
+          - false
+  output:
+    us:statutes/42/415/b#old_age_benefit_computation_year_earnings_total: '3001'
+    us:statutes/42/415/b#average_indexed_monthly_earnings: '125'
+- name: auto_output_computation_base_year_is_eligible
   period:
     period_kind: tax_year
     start: '1979-01-01'
     end: '1979-12-31'
   input:
-    us:statutes/42/415/b#input.calendar_years_to_months: 0
-    us:statutes/42/415/b#input.calendar_years_with_any_part_in_period_of_disability_within_elapsed_year_interval: 0
-    us:statutes/42/415/b#input.child_care_dropout_would_not_lower_primary_insurance_amount: false
+    ? us:statutes/42/415/b#input.at_least_twelve_consecutive_months_without_disability_or_old_age_benefit_before_current_eligibility
+    : false
     us:statutes/42/415/b#input.computation_base_year: 0
     us:statutes/42/415/b#input.computation_base_year_is_entirely_in_period_of_disability: false
-    us:statutes/42/415/b#input.computation_base_year_is_treated_as_last_year_under_subsection_f_2_C: false
-    us:statutes/42/415/b#input.computation_base_year_upper_boundary_year: false
     us:statutes/42/415/b#input.creditable_earnings_for_computation_base_year: 0
-    us:statutes/42/415/b#input.disability_dropout_rule_applies_to_current_eligibility: false
-    us:statutes/42/415/b#input.indexing_year_for_aime: false
+    us:statutes/42/415/b#input.elapsed_year_is_partly_in_period_of_disability: false
+    us:statutes/42/415/b#input.indexing_year_for_aime: 0
+    us:statutes/42/415/b#input.individual_is_entitled_to_disability_insurance_benefit: false
+    us:statutes/42/415/b#input.individual_is_entitled_to_old_age_insurance_benefit: false
+    us:statutes/42/415/b#input.individual_previously_entitled_to_disability_insurance_benefit: false
     us:statutes/42/415/b#input.national_average_wage_index_for_computation_base_year: 0
     us:statutes/42/415/b#input.national_average_wage_index_for_indexing_year: 0
-    us:statutes/42/415/b#input.qualifying_child_care_dropout_year_count: 0
-    us:statutes/42/415/b#input.sum_top_n_over_periods: false
     us:statutes/42/415/b#input.year_individual_attained_age_21: 0
-    us:statutes/42/415/b#input.year_individual_attained_age_62: 0
-    us:statutes/42/415/b#input.year_of_death_or_later_sentinel: false
+    us:statutes/42/415/b#input.year_of_death_or_later_sentinel: 0
+    us:statutes/42/415/b#input.year_of_first_old_age_entitlement: 0
+  output:
+    us:statutes/42/415/b#computation_base_year_is_eligible: not_holds
+- name: auto_output_indexed_creditable_earnings_for_computation_base_year
+  period:
+    period_kind: tax_year
+    start: '1979-01-01'
+    end: '1979-12-31'
+  input:
+    ? us:statutes/42/415/b#input.at_least_twelve_consecutive_months_without_disability_or_old_age_benefit_before_current_eligibility
+    : false
+    us:statutes/42/415/b#input.computation_base_year: 0
+    us:statutes/42/415/b#input.computation_base_year_is_entirely_in_period_of_disability: false
+    us:statutes/42/415/b#input.creditable_earnings_for_computation_base_year: 0
+    us:statutes/42/415/b#input.elapsed_year_is_partly_in_period_of_disability: false
+    us:statutes/42/415/b#input.indexing_year_for_aime: 0
+    us:statutes/42/415/b#input.individual_is_entitled_to_disability_insurance_benefit: false
+    us:statutes/42/415/b#input.individual_is_entitled_to_old_age_insurance_benefit: false
+    us:statutes/42/415/b#input.individual_previously_entitled_to_disability_insurance_benefit: false
+    us:statutes/42/415/b#input.national_average_wage_index_for_computation_base_year: 0
+    us:statutes/42/415/b#input.national_average_wage_index_for_indexing_year: 0
+    us:statutes/42/415/b#input.year_individual_attained_age_21: 0
+    us:statutes/42/415/b#input.year_of_death_or_later_sentinel: 0
+    us:statutes/42/415/b#input.year_of_first_old_age_entitlement: 0
   output:
     us:statutes/42/415/b#indexed_creditable_earnings_for_computation_base_year: 0
+- name: auto_positive_computation_base_year_is_eligible
+  period:
+    period_kind: tax_year
+    start: '1979-01-01'
+    end: '1979-12-31'
+  input:
+    us:statutes/42/415/b#input.computation_base_year: 999999
+    us:statutes/42/415/b#input.computation_base_year_is_entirely_in_period_of_disability: false
+    us:statutes/42/415/b#input.individual_is_entitled_to_old_age_insurance_benefit: false
+    us:statutes/42/415/b#input.year_of_death_or_later_sentinel: 999999
+    us:statutes/42/415/b#input.year_of_first_old_age_entitlement: 999999
+  output:
+    us:statutes/42/415/b#computation_base_year_is_eligible: holds
